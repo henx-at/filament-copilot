@@ -18,6 +18,7 @@ use EslamRedaDiv\FilamentCopilot\Services\ToolRegistry;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Laravel\Ai\Messages\Message;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -252,7 +253,21 @@ class StreamController
                 // published copies of the chat view simply ignore the payload.
                 $this->sendSseEvent('done', ['message_id' => $assistantMessage->id]);
             } catch (\Throwable $e) {
-                $this->sendSseEvent('error', ['message' => $e->getMessage()]);
+                // Raw exception messages can carry SQL text and bindings
+                // (QueryException), file paths or other internal state — none
+                // of which belongs in an end user's chat bubble. Log the full
+                // exception server-side under a short correlation id, and only
+                // echo the raw message into the stream when the app runs with
+                // debug enabled; otherwise the user gets a generic line plus
+                // the id, which support can match to the log entry instantly.
+                $ref = substr((string) Str::ulid(), -6);
+                report(new \RuntimeException("[copilot:{$ref}] ".$e->getMessage(), previous: $e));
+
+                $this->sendSseEvent('error', [
+                    'message' => app()->hasDebugModeEnabled()
+                        ? $e->getMessage()
+                        : __('filament-copilot::filament-copilot.stream_error', ['ref' => $ref]),
+                ]);
                 $this->sendSseEvent('done', []);
             }
         });
