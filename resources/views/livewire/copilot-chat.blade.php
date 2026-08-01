@@ -588,7 +588,7 @@
 
             {{-- Keyboard shortcut hint (desktop only) --}}
             <div class="hidden sm:flex items-center justify-center mt-2">
-                <span class="text-[10px] text-gray-400 dark:text-gray-500">
+                <span class="text-[10px] text-gray-400 dark:text-gray-400">
                     <kbd
                         class="px-1 py-0.5 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 font-mono text-[10px]">Enter</kbd>
                     send &middot;
