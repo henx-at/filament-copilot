@@ -47,8 +47,8 @@ class FilamentCopilotServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         FilamentAsset::register([
-            Css::make('filament-copilot', asset('vendor/filament-copilot/filament-copilot.css')),
-            Js::make('filament-copilot', asset('vendor/filament-copilot/filament-copilot.js')),
+            Css::make('filament-copilot', __DIR__ . '/../resources/dist/filament-copilot.css'),
+            Js::make('filament-copilot', __DIR__ . '/../resources/dist/filament-copilot.js'),
         ], 'eslam-reda-div/filament-copilot');
 
         $this->publishes([
