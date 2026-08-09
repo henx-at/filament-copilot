@@ -207,8 +207,8 @@ class InstallCommand extends Command
                 $this->warn("⚠ Don't forget to add {$envKey}=your-key to your .env file.");
             }
 
-            $this->addEnvVariable('COPILOT_PROVIDER', $provider);
-            $this->addEnvVariable('COPILOT_MODEL', $model);
+            $this->addEnvVariable('FILAMENT_COPILOT_PROVIDER', $provider);
+            $this->addEnvVariable('FILAMENT_COPILOT_MODEL', $model);
         }
 
         // Update config
@@ -219,8 +219,8 @@ class InstallCommand extends Command
             $config = file_get_contents($configPath);
 
             $config = preg_replace(
-                "/('provider'\s*=>\s*env\('COPILOT_PROVIDER',\s*')([^']*)('\))/",
-                "'provider' => env('COPILOT_PROVIDER', '{$provider}')",
+                "/('provider'\s*=>\s*env\('(?:FILAMENT_)?COPILOT_PROVIDER',\s*')([^']*)('\))/",
+                "'provider' => env('FILAMENT_COPILOT_PROVIDER', '{$provider}')",
                 $config
             );
 

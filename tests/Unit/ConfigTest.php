@@ -38,4 +38,20 @@ it('respects authorization by default', function () {
     expect(config('filament-copilot.respect_authorization'))->toBeTrue();
 });
 
+it('uses filament-prefixed environment variables for provider and model', function () {
+    putenv('COPILOT_PROVIDER=legacy-provider');
+    putenv('COPILOT_MODEL=legacy-model');
+    putenv('FILAMENT_COPILOT_PROVIDER=anthropic');
+    putenv('FILAMENT_COPILOT_MODEL=claude-sonnet-4');
+
+    $config = require dirname(__DIR__, 2) . '/config/filament-copilot.php';
+
+    expect($config['provider'])->toBe('anthropic')
+        ->and($config['model'])->toBe('claude-sonnet-4');
+
+    putenv('COPILOT_PROVIDER');
+    putenv('COPILOT_MODEL');
+    putenv('FILAMENT_COPILOT_PROVIDER');
+    putenv('FILAMENT_COPILOT_MODEL');
+});
 

@@ -204,8 +204,8 @@ php artisan vendor:publish --tag=ai-config
 Then add the following to your `.env` file:
 
 ```env
-COPILOT_PROVIDER=openai
-COPILOT_MODEL=gpt-4o
+FILAMENT_COPILOT_PROVIDER=openai
+FILAMENT_COPILOT_MODEL=gpt-4o
 OPENAI_API_KEY=your-api-key-here
 ```
 
@@ -218,8 +218,8 @@ The configuration file is published to `config/filament-copilot.php`. Here is a 
 ### AI Provider & Model
 
 ```php
-'provider' => env('COPILOT_PROVIDER', 'openai'),
-'model'    => env('COPILOT_MODEL'),
+'provider' => env('FILAMENT_COPILOT_PROVIDER', 'openai'),
+'model'    => env('FILAMENT_COPILOT_MODEL'),
 ```
 
 Set via your `.env` file. See [Supported AI Providers](#supported-ai-providers) for the full list.
@@ -926,8 +926,8 @@ php vendor/bin/pest
 Configure via `.env`:
 
 ```env
-COPILOT_PROVIDER=openai
-COPILOT_MODEL=gpt-4o
+FILAMENT_COPILOT_PROVIDER=openai
+FILAMENT_COPILOT_MODEL=gpt-4o
 OPENAI_API_KEY=sk-...
 ```
 
