@@ -18,6 +18,7 @@ use EslamRedaDiv\FilamentCopilot\Services\ToolRegistry;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Laravel\Ai\Messages\Message;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StreamController
@@ -109,8 +110,13 @@ class StreamController
                 // top of the already-present row, duplicating the user's latest
                 // message in every outgoing request body.
                 $lastUserMessage = '';
-                if (! empty($messages) && end($messages)['role'] === 'user') {
-                    $lastUserMessage = array_pop($messages)['content'];
+                $lastMessage = ! empty($messages) ? end($messages) : null;
+
+                if ($lastMessage instanceof Message) {
+                    if ($lastMessage->role->value === 'user') {
+                        $lastUserMessage = $lastMessage->content ?? '';
+                        array_pop($messages);
+                    }
                 }
 
                 $agent->forPanel($panelId)

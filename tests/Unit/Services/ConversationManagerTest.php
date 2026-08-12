@@ -6,6 +6,8 @@ use EslamRedaDiv\FilamentCopilot\Enums\ToolCallStatus;
 use EslamRedaDiv\FilamentCopilot\Models\CopilotConversation;
 use EslamRedaDiv\FilamentCopilot\Models\CopilotMessage;
 use EslamRedaDiv\FilamentCopilot\Services\ConversationManager;
+use Laravel\Ai\Messages\AssistantMessage;
+use Laravel\Ai\Messages\UserMessage;
 
 it('creates a conversation', function () {
     $user = createTestUser();
@@ -86,9 +88,10 @@ it('gets messages formatted for agent', function () {
     $messages = $manager->getMessagesForAgent($conversation);
 
     expect($messages)->toHaveCount(2)
-        ->and($messages[0]['role'])->toBe('user')
-        ->and($messages[0]['content'])->toBe('Hello')
-        ->and($messages[1]['role'])->toBe('assistant');
+        ->and($messages[0])->toBeInstanceOf(UserMessage::class)
+        ->and($messages[0]->content)->toBe('Hello')
+        ->and($messages[1])->toBeInstanceOf(AssistantMessage::class)
+        ->and($messages[1]->content)->toBe('Hi there');
 });
 
 it('gets messages formatted for chat with tool calls in order', function () {

@@ -11,6 +11,10 @@ use EslamRedaDiv\FilamentCopilot\Models\CopilotConversation;
 use EslamRedaDiv\FilamentCopilot\Models\CopilotMessage;
 use EslamRedaDiv\FilamentCopilot\Models\CopilotToolCall;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Laravel\Ai\Messages\AssistantMessage;
+use Laravel\Ai\Messages\Message;
+use Laravel\Ai\Messages\UserMessage;
 
 class ConversationManager
 {
@@ -98,17 +102,25 @@ class ConversationManager
 
     /**
      * Get messages for a conversation in the format expected by the AI SDK.
+     *
+     * @return array<int, Message>
      */
     public function getMessagesForAgent(CopilotConversation $conversation): array
     {
         return $conversation->messages()
+            ->with('toolCalls')
             ->orderByDesc('created_at')
             ->get()
             ->reverse()
-            ->map(fn (CopilotMessage $message) => [
-                'role' => $message->role->value,
-                'content' => $message->content,
-            ])
+            ->map(function (CopilotMessage $message): Message {
+                return match ($message->role) {
+                    MessageRole::User => new UserMessage($message->content),
+                    MessageRole::Assistant => new AssistantMessage(
+                        $message->content ?? '',
+                        new Collection()
+                    ),
+                };
+            })
             ->values()
             ->toArray();
     }
