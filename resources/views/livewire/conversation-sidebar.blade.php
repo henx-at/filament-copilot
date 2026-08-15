@@ -8,11 +8,11 @@
             <button wire:click="newConversation" type="button"
                 class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 title="{{ __('filament-copilot::filament-copilot.new_conversation') }}">
-                <x-filament::icon icon="heroicon-o-plus" class="w-4 h-4 text-gray-500" />
+                <x-filament::icon icon="heroicon-o-plus" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
             <button @click="$dispatch('copilot-close-sidebar')" type="button"
                 class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                <x-filament::icon icon="heroicon-o-x-mark" class="w-4 h-4 text-gray-500" />
+                <x-filament::icon icon="heroicon-o-x-mark" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
         </div>
     </div>
@@ -47,7 +47,7 @@
         @empty
             <div class="px-4 py-8 text-center">
                 <x-filament::icon icon="heroicon-o-chat-bubble-left-right"
-                    class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                    class="w-8 h-8 text-gray-300 dark:text-gray-500 mx-auto mb-2" />
                 <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ __('filament-copilot::filament-copilot.no_conversations') }}
                 </p>

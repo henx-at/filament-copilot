@@ -297,25 +297,25 @@
                     type="button"
                     class="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 fi-color-gray w-8 h-8"
                     title="{{ __('filament-copilot::filament-copilot.export') }}">
-                    <x-filament::icon icon="heroicon-o-arrow-down-tray" class="w-5 h-5 text-gray-400 dark:text-gray-500"
+                    <x-filament::icon icon="heroicon-o-arrow-down-tray" class="w-5 h-5 text-gray-400 dark:text-gray-400"
                         wire:loading.class="animate-pulse" wire:target="exportConversation" />
                 </button>
                 <button @click="toggleSidebar()" type="button"
                     class="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 w-8 h-8"
                     :class="sidebarOpen ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400' :
-                        'hover:bg-gray-500/5 dark:hover:bg-gray-400/5 text-gray-400 dark:text-gray-500'"
+                        'hover:bg-gray-500/5 dark:hover:bg-gray-400/5 text-gray-400 dark:text-gray-400'"
                     title="{{ __('filament-copilot::filament-copilot.history') }}">
                     <x-filament::icon icon="heroicon-o-clock" class="w-5 h-5" />
                 </button>
                 <button wire:click="newConversation" type="button"
                     class="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 fi-color-gray w-8 h-8"
                     title="{{ __('filament-copilot::filament-copilot.new_conversation') }}">
-                    <x-filament::icon icon="heroicon-o-plus" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    <x-filament::icon icon="heroicon-o-plus" class="w-5 h-5 text-gray-400 dark:text-gray-400" />
                 </button>
                 <button @click="open = false" type="button"
                     class="fi-icon-btn fi-modal-close-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 fi-color-gray w-8 h-8"
                     title="{{ __('filament-copilot::filament-copilot.close') ?? 'Close' }}">
-                    <x-filament::icon icon="heroicon-o-x-mark" class="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    <x-filament::icon icon="heroicon-o-x-mark" class="w-5 h-5 text-gray-400 dark:text-gray-400" />
                 </button>
             </div>
         </div>
@@ -378,7 +378,7 @@
             <div id="copilot-messages" x-ref="messages" class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                 @if (empty($messages))
                     <div
-                        class="flex flex-col items-center justify-center h-full text-center text-gray-400 dark:text-gray-500 gap-4 px-4">
+                        class="flex flex-col items-center justify-center h-full text-center text-gray-400 dark:text-gray-400 gap-4 px-4">
                         <div
                             class="w-14 h-14 rounded-2xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
                             <x-filament::icon icon="heroicon-o-sparkles"
@@ -387,7 +387,7 @@
                         <div>
                             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
                                 {{ __('filament-copilot::filament-copilot.welcome_message') }}</p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                            <p class="text-xs text-gray-400 dark:text-gray-400 mt-1">
                                 {{ __('filament-copilot::filament-copilot.input_placeholder') }}</p>
                         </div>
 
@@ -419,7 +419,7 @@
                     <div class="flex items-start gap-2.5" x-show="isStreaming || pendingComplete">
                         <div
                             class="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 mt-0.5">
-                            <x-filament::icon icon="heroicon-o-wrench-screwdriver" class="w-4 h-4 text-gray-500" />
+                            <x-filament::icon icon="heroicon-o-wrench-screwdriver" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         </div>
                         <div class="min-w-0 max-w-[85%] w-full" x-data="{ toolOpen: false }">
                             <button @click="toolOpen = !toolOpen" type="button"
@@ -433,7 +433,7 @@
                                     'bg-danger-50 dark:bg-danger-900/10 border-danger-200 dark:border-danger-800 hover:bg-danger-100 dark:hover:bg-danger-900/20': tool
                                         .status === 'error',
                                 }">
-                                <svg class="w-3.5 h-3.5 text-gray-500 transition-transform duration-200"
+                                <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 transition-transform duration-200"
                                     :class="{ 'rotate-90': toolOpen }" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -527,11 +527,11 @@
                     </div>
                     <div
                         class="flex items-center gap-1.5 py-2.5 px-3.5 bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tl-md">
-                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                        <span class="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                             style="animation-delay: 0ms"></span>
-                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                        <span class="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                             style="animation-delay: 150ms"></span>
-                        <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                        <span class="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                             style="animation-delay: 300ms"></span>
                     </div>
                 </div>
@@ -546,11 +546,11 @@
                         </div>
                         <div
                             class="flex items-center gap-1.5 py-2.5 px-3.5 bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tl-md">
-                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                            <span class="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                                 style="animation-delay: 0ms"></span>
-                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                            <span class="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                                 style="animation-delay: 150ms"></span>
-                            <span class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+                            <span class="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                                 style="animation-delay: 300ms"></span>
                         </div>
                     </div>
@@ -588,7 +588,7 @@
 
             {{-- Keyboard shortcut hint (desktop only) --}}
             <div class="hidden sm:flex items-center justify-center mt-2">
-                <span class="text-[10px] text-gray-400 dark:text-gray-500">
+                <span class="text-[10px] text-gray-400 dark:text-gray-400">
                     <kbd
                         class="px-1 py-0.5 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 font-mono text-[10px]">Enter</kbd>
                     send &middot;

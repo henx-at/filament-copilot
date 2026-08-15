@@ -26,13 +26,13 @@
     @endphp
     <div class="flex items-start gap-2.5">
         <div class="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 mt-0.5">
-            <x-filament::icon icon="heroicon-o-wrench-screwdriver" class="w-4 h-4 text-gray-500" />
+            <x-filament::icon icon="heroicon-o-wrench-screwdriver" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
         </div>
         <div class="min-w-0 max-w-[85%] w-full" x-data="{ open: false }">
             <button @click="open = !open" type="button"
                 class="flex items-center gap-2 px-3 py-2 w-full rounded-t-xl border transition-colors {{ $hasError ? 'bg-danger-50 dark:bg-danger-900/10 border-danger-200 dark:border-danger-800 hover:bg-danger-100 dark:hover:bg-danger-900/20' : 'bg-success-50 dark:bg-success-900/10 border-success-200 dark:border-success-800 hover:bg-success-100 dark:hover:bg-success-900/20' }}"
                 :class="{ 'rounded-b-xl': !open }">
-                <svg class="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" :class="{ 'rotate-90': open }"
+                <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 transition-transform duration-200" :class="{ 'rotate-90': open }"
                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
@@ -110,19 +110,19 @@
             <div class="flex items-center gap-0.5 shrink-0 self-end">
                 <button type="button" wire:click="submitRating('{{ $messageId }}', 'positive')"
                     wire:loading.attr="disabled" wire:target="submitRating"
-                    class="flex items-center justify-center w-6 h-6 rounded-md transition duration-75 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 {{ $rating === 'positive' ? 'text-success-600 dark:text-success-400' : 'text-gray-400 dark:text-gray-500 opacity-50 hover:opacity-100' }}"
+                    class="flex items-center justify-center w-7 h-7 rounded-md transition duration-75 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 {{ $rating === 'positive' ? 'text-success-600 dark:text-success-400' : 'text-gray-400 dark:text-gray-400' }}"
                     title="{{ $helpfulLabel }}" aria-label="{{ $helpfulLabel }}"
                     aria-pressed="{{ $rating === 'positive' ? 'true' : 'false' }}">
                     <x-filament::icon :icon="$rating === 'positive' ? 'heroicon-s-hand-thumb-up' : 'heroicon-o-hand-thumb-up'"
-                        class="w-3.5 h-3.5" />
+                        class="w-4 h-4" />
                 </button>
                 <button type="button" wire:click="submitRating('{{ $messageId }}', 'negative')"
                     wire:loading.attr="disabled" wire:target="submitRating"
-                    class="flex items-center justify-center w-6 h-6 rounded-md transition duration-75 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 {{ $rating === 'negative' ? 'text-danger-600 dark:text-danger-400' : 'text-gray-400 dark:text-gray-500 opacity-50 hover:opacity-100' }}"
+                    class="flex items-center justify-center w-7 h-7 rounded-md transition duration-75 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 {{ $rating === 'negative' ? 'text-danger-600 dark:text-danger-400' : 'text-gray-400 dark:text-gray-400' }}"
                     title="{{ $notHelpfulLabel }}" aria-label="{{ $notHelpfulLabel }}"
                     aria-pressed="{{ $rating === 'negative' ? 'true' : 'false' }}">
                     <x-filament::icon :icon="$rating === 'negative' ? 'heroicon-s-hand-thumb-down' : 'heroicon-o-hand-thumb-down'"
-                        class="w-3.5 h-3.5" />
+                        class="w-4 h-4" />
                 </button>
             </div>
         @endif
