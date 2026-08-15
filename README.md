@@ -172,7 +172,7 @@ php artisan filament-copilot:install
 This command will:
 
 1. **Publish the configuration** file to `config/filament-copilot.php`
-2. **Publish CSS/JS assets** to `public/vendor/filament-copilot/`
+2. **Publish CSS/JS assets** via Filament's asset pipeline (`php artisan filament:assets`)
 3. **Publish and run database migrations** (7 tables)
 4. **Publish the Laravel AI SDK config** (`config/ai.php`)
 5. **Configure your AI provider** (OpenAI, Anthropic, Gemini, etc.)
@@ -188,9 +188,6 @@ If you prefer to set things up manually:
 # Publish configuration
 php artisan vendor:publish --tag=filament-copilot-config
 
-# Publish assets
-php artisan vendor:publish --tag=filament-copilot-assets
-
 # Publish migrations
 php artisan vendor:publish --tag=filament-copilot-migrations
 
@@ -201,6 +198,13 @@ php artisan migrate
 php artisan vendor:publish --tag=ai-config
 ```
 
+CSS/JS assets are handled automatically by Filament's own asset pipeline — there is no
+separate publish step. Filament Copilot registers its assets via `FilamentAsset::register()`,
+and running `php artisan filament:assets` copies them into your application's `public/`
+directory. This command is already run for you by the installer, and Filament recommends
+adding it to your `composer.json`'s `post-autoload-dump` scripts (alongside `filament:upgrade`)
+so assets stay in sync automatically whenever the package is updated.
+
 Then add the following to your `.env` file:
 
 ```env
@@ -208,6 +212,11 @@ FILAMENT_COPILOT_PROVIDER=openai
 FILAMENT_COPILOT_MODEL=gpt-4o
 OPENAI_API_KEY=your-api-key-here
 ```
+
+> **Upgrading from <= v1.2.x?** Asset publishing via `vendor:publish --tag=filament-copilot-assets`
+> has been removed — assets are now served entirely through Filament's asset pipeline. You can
+> safely delete the now-unused `public/vendor/filament-copilot/` directory, and remove any
+> `php artisan vendor:publish --tag=filament-copilot-assets` step from your deploy scripts.
 
 ---
 

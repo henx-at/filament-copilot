@@ -52,10 +52,6 @@ class FilamentCopilotServiceProvider extends PackageServiceProvider
         ], 'eslam-reda-div/filament-copilot');
 
         $this->publishes([
-            __DIR__ . '/../resources/dist' => public_path('vendor/filament-copilot'),
-        ], 'filament-copilot-assets');
-
-        $this->publishes([
             __DIR__ . '/../stubs' => base_path('stubs/filament-copilot'),
         ], 'filament-copilot-stubs');
 

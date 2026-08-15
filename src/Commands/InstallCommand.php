@@ -38,11 +38,9 @@ class InstallCommand extends Command
         $this->section('Step 2/8 — Publishing assets');
 
         $this->line('⏳ Publishing JS and CSS assets...');
-        $this->callSilently('vendor:publish', [
-            '--tag' => 'filament-copilot-assets',
-        ]);
+        $this->callSilently('filament:assets');
 
-        $this->info('✓ Assets published to public/vendor/filament-copilot/');
+        $this->info('✓ Filament assets published.');
 
         // Step 3
         $this->section('Step 3/8 — Database setup');
