@@ -87,7 +87,15 @@
             class="min-w-0 max-w-[85%] rounded-2xl rounded-tl-md px-3.5 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
             <div
                 class="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none wrap-break-word [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                {!! \Illuminate\Support\Str::markdown($msg['content'] ?? '') !!}
+                {{-- html_input=escape (the default) stops raw HTML/JS in model output
+                     from executing in the panel: league/commonmark otherwise defaults
+                     to html_input=ALLOW, so a prompt-injected <script> or event handler
+                     in the assistant's reply would render live. See
+                     config('filament-copilot.chat.html_input') for the opt-out. --}}
+                {!! \Illuminate\Support\Str::markdown($msg['content'] ?? '', [
+                    'html_input' => config('filament-copilot.chat.html_input', 'escape'),
+                    'allow_unsafe_links' => false,
+                ]) !!}
             </div>
         </div>
         @if ($showFeedback)

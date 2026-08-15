@@ -36,6 +36,33 @@ return [
 
     'chat' => [
         'title_auto_generate' => true,
+
+        /*
+        |----------------------------------------------------------------
+        | Markdown HTML Handling
+        |----------------------------------------------------------------
+        | How raw HTML inside assistant/model-generated message content is
+        | treated when it is rendered as markdown in the chat bubble.
+        |
+        | Assistant message content is untrusted: it comes from the model,
+        | and the model's output can be steered by prompt injection (e.g.
+        | text read from a tool result, a document, or a record). Without
+        | escaping, HTML/JS embedded in that output (a <script> tag, an
+        | onerror handler, ...) would execute in the panel of whoever has
+        | the chat open.
+        |
+        | Valid values (passed straight through to league/commonmark's
+        | html_input option):
+        | - 'escape' (default): HTML in the model's output is rendered as
+        |   visible text instead of being parsed as markup. This is the
+        |   safe default.
+        | - 'strip': HTML in the model's output is silently removed.
+        | - 'allow': HTML in the model's output is rendered as-is. This
+        |   restores the pre-hardening behavior and is only safe for
+        |   consumers who intentionally have their model emit trusted HTML.
+        */
+
+        'html_input' => 'escape',
     ],
 
     /*
