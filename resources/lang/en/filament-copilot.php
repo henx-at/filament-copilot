@@ -32,6 +32,7 @@ return [
     // Messages
     'rate_limit_exceeded' => 'You have exceeded the rate limit. Please try again later.',
     'error_occurred' => 'An error occurred',
+    'stream_error' => 'Something went wrong. Please try again. (ref: :ref)',
 
     // Message Feedback
     'feedback_helpful' => 'Helpful',
