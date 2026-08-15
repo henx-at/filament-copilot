@@ -102,19 +102,19 @@
             <div class="flex items-center gap-0.5 shrink-0 self-end">
                 <button type="button" wire:click="submitRating('{{ $messageId }}', 'positive')"
                     wire:loading.attr="disabled" wire:target="submitRating"
-                    class="flex items-center justify-center w-6 h-6 rounded-md transition duration-75 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 {{ $rating === 'positive' ? 'text-success-600 dark:text-success-400' : 'text-gray-400 dark:text-gray-400 opacity-50 hover:opacity-100' }}"
+                    class="flex items-center justify-center w-7 h-7 rounded-md transition duration-75 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 {{ $rating === 'positive' ? 'text-success-600 dark:text-success-400' : 'text-gray-400 dark:text-gray-400' }}"
                     title="{{ $helpfulLabel }}" aria-label="{{ $helpfulLabel }}"
                     aria-pressed="{{ $rating === 'positive' ? 'true' : 'false' }}">
                     <x-filament::icon :icon="$rating === 'positive' ? 'heroicon-s-hand-thumb-up' : 'heroicon-o-hand-thumb-up'"
-                        class="w-3.5 h-3.5" />
+                        class="w-4 h-4" />
                 </button>
                 <button type="button" wire:click="submitRating('{{ $messageId }}', 'negative')"
                     wire:loading.attr="disabled" wire:target="submitRating"
-                    class="flex items-center justify-center w-6 h-6 rounded-md transition duration-75 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 {{ $rating === 'negative' ? 'text-danger-600 dark:text-danger-400' : 'text-gray-400 dark:text-gray-400 opacity-50 hover:opacity-100' }}"
+                    class="flex items-center justify-center w-7 h-7 rounded-md transition duration-75 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 {{ $rating === 'negative' ? 'text-danger-600 dark:text-danger-400' : 'text-gray-400 dark:text-gray-400' }}"
                     title="{{ $notHelpfulLabel }}" aria-label="{{ $notHelpfulLabel }}"
                     aria-pressed="{{ $rating === 'negative' ? 'true' : 'false' }}">
                     <x-filament::icon :icon="$rating === 'negative' ? 'heroicon-s-hand-thumb-down' : 'heroicon-o-hand-thumb-down'"
-                        class="w-3.5 h-3.5" />
+                        class="w-4 h-4" />
                 </button>
             </div>
         @endif
