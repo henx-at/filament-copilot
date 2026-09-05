@@ -754,6 +754,22 @@ The `ContextBuilder` assembles the system prompt from multiple sources:
 4. The tool result is streamed back to the AI agent, which incorporates it into its response.
 5. All tool calls are logged in the `copilot_tool_calls` table with full status tracking.
 
+### Human Tool Approval
+
+Tools implementing Laravel AI's `Approvable` contract are paused before execution.
+The chat displays the pending tool, arguments, and approval reason, and resumes the
+same conversation after the user approves or rejects the request. Before using this
+feature, publish and run Laravel AI's conversation migrations:
+
+```bash
+php artisan vendor:publish --provider="Laravel\Ai\AiServiceProvider"
+php artisan migrate
+```
+
+Use `InteractsWithApprovals` on tools that need approval. The package stores the
+Laravel AI conversation identifier in its conversation metadata so approval flows
+remain resumable across requests.
+
 ---
 
 ## Events

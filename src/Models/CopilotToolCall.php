@@ -15,6 +15,7 @@ class CopilotToolCall extends Model
 
     protected $fillable = [
         'message_id',
+        'provider_id',
         'tool_name',
         'tool_input',
         'tool_output',

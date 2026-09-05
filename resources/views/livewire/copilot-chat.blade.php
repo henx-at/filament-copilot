@@ -7,6 +7,7 @@
     isStreaming: false,
     streamedContent: '',
     pendingComplete: false,
+    pendingApprovals: [],
     toolCalls: [],
     _cleanups: [],
     _abortController: null,
@@ -112,6 +113,7 @@
         this.isStreaming = true;
         this.streamedContent = '';
         this.toolCalls = [];
+        this.pendingApprovals = [];
         this.pendingComplete = false;
 
         try {
@@ -126,6 +128,7 @@
                     message: params.message,
                     conversation_id: params.conversationId,
                     panel_id: params.panelId,
+                    decisions: params.decisions || undefined,
                 }),
                 signal: this._abortController.signal,
             });
@@ -188,6 +191,11 @@
                                 }
                                 this.$nextTick(() => this.scrollToBottom());
                                 break;
+                                case 'tool_approval_request':
+                                this.pendingApprovals = data.approvals || [];
+                                this.isStreaming = false;
+                                this.$nextTick(() => this.scrollToBottom());
+                                break;
                                 case 'navigate':
                                     // Queue navigation URL to execute after stream completes
                                     this._pendingNavigateUrl = data.url;
@@ -202,6 +210,7 @@
                                     // Absent on error streams, and on servers
                                     // running an older package release.
                                     assistantMessageId = data.message_id || null;
+                                    if (data.approvals) this.pendingApprovals = data.approvals;
                                     break;
                             }
                         } catch (e) {
@@ -215,7 +224,10 @@
 
             this._abortController = null;
 
-            if (this.streamedContent) {
+            if (this.pendingApprovals.length) {
+                this.isStreaming = false;
+                return;
+            } else if (this.streamedContent || this.toolCalls.length) {
                 this.pendingComplete = true;
                 this.isStreaming = false;
 
@@ -264,6 +276,20 @@
             this.streamedContent = '';
             this.toolCalls = [];
         }
+    },
+    submitApprovals(action) {
+        const decisions = {};
+        this.pendingApprovals.forEach(approval => {
+            decisions[approval.id] = { action };
+        });
+        this.startStreaming({
+            message: null,
+            decisions,
+            conversationId: this.conversationId,
+            panelId: @js(\Filament\Facades\Filament::getCurrentPanel()?->getId()),
+            streamUrl: @js(route('filament-copilot.stream')),
+            csrfToken: @js(csrf_token()),
+        });
     }
 }" x-cloak @copilot-open.window="open = true" @copilot-close-sidebar.window="sidebarOpen = false"
     @copilot-load-conversation.window="sidebarOpen = false" @keydown.escape.window="if(open) open = false">
@@ -498,6 +524,33 @@
                         </div>
                     </div>
                 </template>
+
+                {{-- Human approval requests --}}
+                <div x-show="pendingApprovals.length" x-cloak
+                    class="mx-1 rounded-xl border border-warning-200 bg-warning-50 p-3 dark:border-warning-800 dark:bg-warning-950/30">
+                    <div class="flex items-center gap-2 text-sm font-medium text-warning-700 dark:text-warning-300">
+                        <x-filament::icon icon="heroicon-o-shield-exclamation" class="h-4 w-4" />
+                        <span>Approval required</span>
+                    </div>
+                    <template x-for="approval in pendingApprovals" :key="approval.id">
+                        <div class="mt-2 text-xs text-warning-800 dark:text-warning-200">
+                            <div class="font-medium" x-text="approval.tool"></div>
+                            <div x-show="approval.reason" x-text="approval.reason"></div>
+                            <pre class="mt-1 max-h-20 overflow-y-auto whitespace-pre-wrap break-all"
+                                x-text="JSON.stringify(approval.arguments, null, 2)"></pre>
+                        </div>
+                    </template>
+                    <div class="mt-3 flex gap-2">
+                        <button type="button" @click="submitApprovals('approve')"
+                            class="rounded-lg bg-success-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-success-500">
+                            Approve
+                        </button>
+                        <button type="button" @click="submitApprovals('reject')"
+                            class="rounded-lg bg-danger-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-danger-500">
+                            Reject
+                        </button>
+                    </div>
+                </div>
 
                 {{-- SSE Streaming content (stays visible until server-rendered message replaces it) --}}
                 <div x-show="(isStreaming || pendingComplete) && streamedContent" x-cloak wire:ignore.self

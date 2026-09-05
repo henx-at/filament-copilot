@@ -8,6 +8,7 @@ use EslamRedaDiv\FilamentCopilot\Agent\CopilotAgent;
 use EslamRedaDiv\FilamentCopilot\Enums\ToolCallStatus;
 use EslamRedaDiv\FilamentCopilot\Events\CopilotMessageSent;
 use EslamRedaDiv\FilamentCopilot\Events\CopilotResponseReceived;
+use EslamRedaDiv\FilamentCopilot\Events\CopilotToolApprovalRequired;
 use EslamRedaDiv\FilamentCopilot\Events\CopilotToolExecuted;
 use EslamRedaDiv\FilamentCopilot\FilamentCopilotPlugin;
 use EslamRedaDiv\FilamentCopilot\Models\CopilotConversation;
@@ -27,7 +28,10 @@ class StreamController
     public function stream(Request $request): StreamedResponse
     {
         $request->validate([
-            'message' => ['required', 'string', 'max:10000'],
+            'message' => ['nullable', 'string', 'max:10000', 'required_without:decisions', 'prohibits:decisions'],
+            'decisions' => ['nullable', 'array', 'required_without:message', 'prohibits:message'],
+            'decisions.*.action' => ['required_with:decisions', 'in:approve,reject'],
+            'decisions.*.result' => ['nullable', 'string'],
             'conversation_id' => ['nullable', 'string'],
             'panel_id' => ['required', 'string'],
         ]);
@@ -56,12 +60,13 @@ class StreamController
 
         $tenant = Filament::getTenant();
         $content = $request->input('message');
+        $decisions = $request->input('decisions');
         $conversationId = $request->input('conversation_id');
 
         /** @var RateLimitService $rateLimitService */
         $rateLimitService = app(RateLimitService::class);
 
-        if (config('filament-copilot.rate_limits.enabled') && ! $rateLimitService->canSendMessage($user, $panelId, $tenant)) {
+        if (! $decisions && config('filament-copilot.rate_limits.enabled') && ! $rateLimitService->canSendMessage($user, $panelId, $tenant)) {
             return $this->sseResponse(function () {
                 $this->sendSseEvent('error', ['message' => __('filament-copilot::filament-copilot.rate_limit_exceeded')]);
                 $this->sendSseEvent('done', []);
@@ -88,10 +93,19 @@ class StreamController
             $conversation = $conversationManager->create($user, $panelId, $tenant);
         }
 
-        $userMessage = $conversationManager->addUserMessage($conversation, $content);
-        event(new CopilotMessageSent($conversation, $content, $panelId));
+        $userMessage = null;
 
-        return $this->sseResponse(function () use ($conversation, $conversationManager, $user, $panelId, $tenant, $rateLimitService, $plugin, $userMessage) {
+        if ($content !== null) {
+            $userMessage = $conversationManager->addUserMessage($conversation, $content);
+            event(new CopilotMessageSent($conversation, $content, $panelId));
+        } elseif (! ($conversation->metadata['ai_conversation_id'] ?? null)) {
+            return $this->sseResponse(function () {
+                $this->sendSseEvent('error', ['message' => 'This conversation cannot be resumed.']);
+                $this->sendSseEvent('done', []);
+            });
+        }
+
+        return $this->sseResponse(function () use ($conversation, $conversationManager, $user, $panelId, $tenant, $rateLimitService, $plugin, $userMessage, $content, $decisions) {
             $this->sendSseEvent('conversation', ['id' => $conversation->id]);
 
             try {
@@ -101,7 +115,8 @@ class StreamController
                 /** @var CopilotAgent $agent */
                 $agent = app(CopilotAgent::class);
 
-                $messages = $conversationManager->getMessagesForAgent($conversation);
+                $sdkConversationId = $conversation->metadata['ai_conversation_id'] ?? null;
+                $messages = $sdkConversationId ? [] : $conversationManager->getMessagesForAgent($conversation);
 
                 // `addUserMessage()` above has already persisted the current user
                 // message, so `getMessagesForAgent()` returns it as the trailing
@@ -110,8 +125,8 @@ class StreamController
                 // `Promptable::stream()` wraps `prompt:` as a NEW user message on
                 // top of the already-present row, duplicating the user's latest
                 // message in every outgoing request body.
-                $lastUserMessage = '';
-                $lastMessage = ! empty($messages) ? end($messages) : null;
+                $lastUserMessage = $content ?? '';
+                $lastMessage = $content === null && ! empty($messages) ? end($messages) : null;
 
                 if ($lastMessage instanceof Message) {
                     if ($lastMessage->role->value === 'user') {
@@ -121,11 +136,15 @@ class StreamController
                 }
 
                 $agent->forPanel($panelId)
-                    ->forUser($user)
                     ->forTenant($tenant)
                     ->withTools($toolRegistry->buildTools($panelId, $user, $tenant, $conversation->id))
-                    ->withMessages($messages)
                     ->withSystemPrompt($plugin->getSystemPrompt());
+
+                if ($sdkConversationId) {
+                    $agent->continue($sdkConversationId, as: $user);
+                } else {
+                    $agent->forUser($user)->withMessages($messages);
+                }
 
                 $provider = $plugin->getProvider();
                 $model = $plugin->getModel();
@@ -133,11 +152,23 @@ class StreamController
                 // Send start event
                 $this->sendSseEvent('start', []);
 
+                $prompt = $decisions
+                    ? \Laravel\Ai\Approvals\Decisions::from(collect($decisions)->map(
+                        fn (array $decision) => ($decision['action'] ?? null) === 'approve'
+                            ? \Laravel\Ai\Approvals\Decision::approve()
+                            : \Laravel\Ai\Approvals\Decision::reject($decision['result'] ?? null)
+                    )->all())
+                    : $lastUserMessage;
+
                 $streamResponse = $agent->stream(
-                    prompt: $lastUserMessage,
+                    prompt: $prompt,
                     provider: $provider,
                     model: $model,
                 );
+                $sdkConversationId = null;
+                $streamResponse->then(function ($response) use (&$sdkConversationId): void {
+                    $sdkConversationId = $response->conversationId;
+                });
 
                 $responseText = '';
                 $usage = null;
@@ -146,6 +177,24 @@ class StreamController
 
                 /** @var array<string, CopilotToolCall> $toolCallsByProviderId */
                 $toolCallsByProviderId = [];
+                $pendingApprovals = [];
+                $toolCallMessage = $userMessage ?: $conversation->messages()
+                    ->where('role', \EslamRedaDiv\FilamentCopilot\Enums\MessageRole::User)
+                    ->latest()
+                    ->first();
+
+                if ($decisions && $toolCallMessage) {
+                    foreach ($decisions as $providerId => $decision) {
+                        $toolCall = $toolCallMessage->toolCalls()->where('provider_id', $providerId)->first();
+
+                        if ($toolCall) {
+                            ($decision['action'] ?? null) === 'approve'
+                                ? $toolCall->approve()
+                                : $toolCall->reject();
+                            $toolCallsByProviderId[$providerId] = $toolCall;
+                        }
+                    }
+                }
 
                 // Stream real-time chunks from the AI provider
                 foreach ($streamResponse as $event) {
@@ -160,7 +209,8 @@ class StreamController
                         ]);
 
                         if ($shouldLogToolCalls) {
-                            $toolCallsByProviderId[$event->toolCall->id] = $userMessage->toolCalls()->create([
+                            $toolCallsByProviderId[$event->toolCall->id] = $toolCallMessage?->toolCalls()->create([
+                                'provider_id' => $event->toolCall->id,
                                 'tool_name' => $event->toolCall->name,
                                 'tool_input' => $event->toolCall->arguments,
                                 'status' => ToolCallStatus::Pending,
@@ -183,7 +233,8 @@ class StreamController
                             $toolCall = $toolCallsByProviderId[$providerToolCallId] ?? null;
 
                             if (! $toolCall) {
-                                $toolCall = $userMessage->toolCalls()->create([
+                                $toolCall = $toolCallMessage?->toolCalls()->create([
+                                    'provider_id' => $providerToolCallId,
                                     'tool_name' => $event->toolResult->name,
                                     'tool_input' => $event->toolResult->arguments,
                                     'status' => ToolCallStatus::Pending,
@@ -203,6 +254,38 @@ class StreamController
                                 result: $rawResult,
                             ));
                         }
+                    } elseif (get_class($event) === 'Laravel\\Ai\\Streaming\\Events\\ToolApprovalRequest') {
+                        foreach ($event->pendingApprovals as $approval) {
+                            $pendingApprovals[] = $approval->toArray();
+
+                            if ($shouldLogToolCalls && $userMessage) {
+                                $toolCall = $toolCallsByProviderId[$approval->id] ?? $userMessage->toolCalls()
+                                    ->where('tool_name', $approval->tool)
+                                    ->where('status', ToolCallStatus::Pending)
+                                    ->latest()
+                                    ->first();
+
+                                if (! $toolCall) {
+                                    $toolCall = $toolCallMessage?->toolCalls()->create([
+                                        'provider_id' => $approval->id,
+                                        'tool_name' => $approval->tool,
+                                        'tool_input' => $approval->arguments,
+                                        'status' => ToolCallStatus::Pending,
+                                        'requires_approval' => true,
+                                    ]);
+                                } else {
+                                    $toolCall->update([
+                                        'tool_input' => $approval->arguments,
+                                        'requires_approval' => true,
+                                    ]);
+                                }
+
+                                $toolCallsByProviderId[$approval->id] = $toolCall;
+                                event(new CopilotToolApprovalRequired($toolCall->fresh()));
+                            }
+                        }
+
+                        $this->sendSseEvent('tool_approval_request', ['approvals' => $pendingApprovals]);
                     } elseif ($event instanceof \Laravel\Ai\Streaming\Events\StreamEnd) {
                         $usage = $event->usage;
                     }
@@ -211,6 +294,16 @@ class StreamController
                 // Fallback: get usage from the streamable response if not captured from events
                 if ($usage === null) {
                     $usage = $streamResponse->usage;
+                }
+
+                $sdkConversationId ??= $streamResponse->conversationId;
+
+                if ($sdkConversationId) {
+                    $conversation->update([
+                        'metadata' => array_merge($conversation->metadata ?? [], [
+                            'ai_conversation_id' => $sdkConversationId,
+                        ]),
+                    ]);
                 }
 
                 // Store the complete message
@@ -251,7 +344,10 @@ class StreamController
                 // reference the reply it just streamed — for message feedback,
                 // and for anything else that needs to address it later. Older
                 // published copies of the chat view simply ignore the payload.
-                $this->sendSseEvent('done', ['message_id' => $assistantMessage->id]);
+                $this->sendSseEvent('done', [
+                    'message_id' => $assistantMessage->id,
+                    'approvals' => $pendingApprovals,
+                ]);
             } catch (\Throwable $e) {
                 // Raw exception messages can carry SQL text and bindings
                 // (QueryException), file paths or other internal state — none

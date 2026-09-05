@@ -13,6 +13,7 @@ use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Contracts\HasTools;
+use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Promptable;
 use Stringable;
 
@@ -21,6 +22,11 @@ use Stringable;
 class CopilotAgent implements Agent, Conversational, HasMiddleware, HasTools
 {
     use Promptable;
+    use RemembersConversations {
+        messages as sdkMessages;
+        forUser as rememberForUser;
+        continue as rememberContinue;
+    }
 
     protected string $panelId;
 
@@ -55,6 +61,19 @@ class CopilotAgent implements Agent, Conversational, HasMiddleware, HasTools
     public function forUser(Model $user): static
     {
         $this->user = $user;
+        $this->rememberForUser($user);
+
+        return $this;
+    }
+
+    public function continue(string $conversationId, ?object $as = null): static
+    {
+        if (! $as instanceof Model) {
+            throw new \InvalidArgumentException('A user model is required to continue a copilot conversation.');
+        }
+
+        $this->user = $as;
+        $this->rememberContinue($conversationId, as: $as);
 
         return $this;
     }
@@ -97,7 +116,9 @@ class CopilotAgent implements Agent, Conversational, HasMiddleware, HasTools
 
     public function messages(): iterable
     {
-        return $this->conversationMessages;
+        return $this->currentConversation() !== null
+            ? $this->sdkMessages()
+            : $this->conversationMessages;
     }
 
     public function middleware(): array
