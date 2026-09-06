@@ -50,7 +50,12 @@ class InstallCommand extends Command
             '--tag' => 'filament-copilot-migrations',
         ]);
 
-        $this->info('✓ Migration files published.');
+        $this->line('⏳ Publishing Laravel AI conversation migrations...');
+        $this->callSilently('vendor:publish', [
+            '--tag' => 'filament-copilot-ai-migrations',
+        ]);
+
+        $this->info('✓ Migration files published, including Laravel AI conversation tables.');
 
         $this->newLine();
 

@@ -165,7 +165,6 @@ it('persists streamed tool calls and marks successful calls as executed', functi
     $agent->shouldReceive('forUser')->andReturnSelf();
     $agent->shouldReceive('forTenant')->andReturnSelf();
     $agent->shouldReceive('withTools')->andReturnSelf();
-    $agent->shouldReceive('withMessages')->andReturnSelf();
     $agent->shouldReceive('withSystemPrompt')->andReturnSelf();
     $agent->shouldReceive('stream')->andReturn(makeToolCallStreamResponse());
     app()->instance(CopilotAgent::class, $agent);
@@ -199,7 +198,6 @@ it('persists failed streamed tool calls with failed status', function () {
     $agent->shouldReceive('forUser')->andReturnSelf();
     $agent->shouldReceive('forTenant')->andReturnSelf();
     $agent->shouldReceive('withTools')->andReturnSelf();
-    $agent->shouldReceive('withMessages')->andReturnSelf();
     $agent->shouldReceive('withSystemPrompt')->andReturnSelf();
     $agent->shouldReceive('stream')->andReturn(makeToolCallStreamResponse(false, 'Permission denied', 'Permission denied'));
     app()->instance(CopilotAgent::class, $agent);

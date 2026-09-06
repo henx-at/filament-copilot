@@ -20,7 +20,6 @@ use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
-use Laravel\Ai\Messages\Message;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StreamController
@@ -116,24 +115,6 @@ class StreamController
                 $agent = app(CopilotAgent::class);
 
                 $sdkConversationId = $conversation->metadata['ai_conversation_id'] ?? null;
-                $messages = $sdkConversationId ? [] : $conversationManager->getMessagesForAgent($conversation);
-
-                // `addUserMessage()` above has already persisted the current user
-                // message, so `getMessagesForAgent()` returns it as the trailing
-                // row. Extract that content for `prompt:` and drop the row from
-                // the history we pass to `withMessages()`. Otherwise laravel/ai's
-                // `Promptable::stream()` wraps `prompt:` as a NEW user message on
-                // top of the already-present row, duplicating the user's latest
-                // message in every outgoing request body.
-                $lastUserMessage = $content ?? '';
-                $lastMessage = $content === null && ! empty($messages) ? end($messages) : null;
-
-                if ($lastMessage instanceof Message) {
-                    if ($lastMessage->role->value === 'user') {
-                        $lastUserMessage = $lastMessage->content ?? '';
-                        array_pop($messages);
-                    }
-                }
 
                 $agent->forPanel($panelId)
                     ->forTenant($tenant)
@@ -143,7 +124,7 @@ class StreamController
                 if ($sdkConversationId) {
                     $agent->continue($sdkConversationId, as: $user);
                 } else {
-                    $agent->forUser($user)->withMessages($messages);
+                    $agent->forUser($user);
                 }
 
                 $provider = $plugin->getProvider();
@@ -158,7 +139,7 @@ class StreamController
                             ? \Laravel\Ai\Approvals\Decision::approve()
                             : \Laravel\Ai\Approvals\Decision::reject($decision['result'] ?? null)
                     )->all())
-                    : $lastUserMessage;
+                    : $content;
 
                 $streamResponse = $agent->stream(
                     prompt: $prompt,

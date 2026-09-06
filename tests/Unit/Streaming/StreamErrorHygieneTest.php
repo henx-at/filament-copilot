@@ -74,7 +74,6 @@ function fakeThrowingAgentForErrorHygieneTest(Throwable $exception): void
     $agent->shouldReceive('forUser')->andReturnSelf();
     $agent->shouldReceive('forTenant')->andReturnSelf();
     $agent->shouldReceive('withTools')->andReturnSelf();
-    $agent->shouldReceive('withMessages')->andReturnSelf();
     $agent->shouldReceive('withSystemPrompt')->andReturnSelf();
     $agent->shouldReceive('stream')->andThrow($exception);
     app()->instance(CopilotAgent::class, $agent);

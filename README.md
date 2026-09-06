@@ -132,11 +132,11 @@ Filament Copilot integrates directly into your Filament panels with a chat inter
 
 | Dependency                   | Version                       |
 | ---------------------------- | ----------------------------- |
-| PHP                          | ^8.2                          |
+| PHP                          | ^8.3                          |
 | Laravel                      | 11.x / 12.x                   |
 | Filament                     | ^5.0                          |
 | Livewire                     | ^3.5 (ships with Filament v5) |
-| Laravel AI SDK               | ^0.2.7                        |
+| Laravel AI SDK               | ^0.10.0                       |
 | Spatie Laravel Package Tools | ^1.16                         |
 
 > **Note:** This package is built for **Filament v5** and **Livewire 3.5+** (as bundled with Filament v5). It leverages the official **Laravel AI SDK** (`laravel/ai`) for all AI operations.
@@ -145,7 +145,7 @@ Filament Copilot integrates directly into your Filament panels with a chat inter
 
 ## Requirements
 
-- PHP 8.2 or higher
+- PHP 8.3 or higher
 - Laravel 11 or 12
 - Filament v5
 - A supported AI provider API key (or Ollama for local models)
@@ -173,7 +173,7 @@ This command will:
 
 1. **Publish the configuration** file to `config/filament-copilot.php`
 2. **Publish CSS/JS assets** via Filament's asset pipeline (`php artisan filament:assets`)
-3. **Publish and run database migrations** (7 tables)
+3. **Publish and run database migrations**, including Laravel AI conversation tables
 4. **Publish the Laravel AI SDK config** (`config/ai.php`)
 5. **Configure your AI provider** (OpenAI, Anthropic, Gemini, etc.)
 6. **Select your AI model** from popular options or enter a custom one
@@ -190,6 +190,9 @@ php artisan vendor:publish --tag=filament-copilot-config
 
 # Publish migrations
 php artisan vendor:publish --tag=filament-copilot-migrations
+
+# Publish Laravel AI conversation migrations
+php artisan vendor:publish --tag=filament-copilot-ai-migrations
 
 # Run migrations
 php artisan migrate
@@ -731,7 +734,7 @@ This adds a `copilotConversations()` polymorphic relationship to your user model
 1. User sends a message from the chat modal.
 2. A `POST` request is made to `/copilot/stream`.
 3. The `StreamController` validates auth, checks rate limits, and creates/loads the conversation.
-4. The `CopilotAgent` is built with tools, messages, and middleware.
+4. The `CopilotAgent` is built with tools, native persisted conversation history, and middleware.
 5. The response streams back via **Server-Sent Events** (SSE) — text deltas, tool calls, and tool results are sent as they happen.
 6. The Livewire component renders the streamed response in real-time.
 
@@ -758,11 +761,10 @@ The `ContextBuilder` assembles the system prompt from multiple sources:
 
 Tools implementing Laravel AI's `Approvable` contract are paused before execution.
 The chat displays the pending tool, arguments, and approval reason, and resumes the
-same conversation after the user approves or rejects the request. Before using this
-feature, publish and run Laravel AI's conversation migrations:
+same conversation after the user approves or rejects the request. Before using this feature, publish and run Laravel AI's conversation migrations:
 
 ```bash
-php artisan vendor:publish --provider="Laravel\Ai\AiServiceProvider"
+php artisan vendor:publish --tag=filament-copilot-ai-migrations
 php artisan migrate
 ```
 

@@ -23,7 +23,6 @@ class CopilotAgent implements Agent, Conversational, HasMiddleware, HasTools
 {
     use Promptable;
     use RemembersConversations {
-        messages as sdkMessages;
         forUser as rememberForUser;
         continue as rememberContinue;
     }
@@ -35,8 +34,6 @@ class CopilotAgent implements Agent, Conversational, HasMiddleware, HasTools
     protected Model $user;
 
     protected array $tools = [];
-
-    protected iterable $conversationMessages = [];
 
     protected ?string $systemPrompt = null;
 
@@ -85,13 +82,6 @@ class CopilotAgent implements Agent, Conversational, HasMiddleware, HasTools
         return $this;
     }
 
-    public function withMessages(iterable $messages): static
-    {
-        $this->conversationMessages = $messages;
-
-        return $this;
-    }
-
     public function withSystemPrompt(?string $prompt): static
     {
         $this->systemPrompt = $prompt;
@@ -112,13 +102,6 @@ class CopilotAgent implements Agent, Conversational, HasMiddleware, HasTools
     public function tools(): iterable
     {
         return $this->tools;
-    }
-
-    public function messages(): iterable
-    {
-        return $this->currentConversation() !== null
-            ? $this->sdkMessages()
-            : $this->conversationMessages;
     }
 
     public function middleware(): array

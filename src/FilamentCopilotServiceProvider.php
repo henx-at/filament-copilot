@@ -46,6 +46,14 @@ class FilamentCopilotServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
+        $aiMigrationsPath = base_path('vendor/laravel/ai/database/migrations');
+
+        if (is_dir($aiMigrationsPath)) {
+            $this->publishesMigrations([
+                $aiMigrationsPath => database_path('migrations'),
+            ], 'filament-copilot-ai-migrations');
+        }
+
         FilamentAsset::register([
             Css::make('filament-copilot', __DIR__ . '/../resources/dist/filament-copilot.css'),
             Js::make('filament-copilot', __DIR__ . '/../resources/dist/filament-copilot.js'),
