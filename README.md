@@ -136,7 +136,7 @@ Filament Copilot integrates directly into your Filament panels with a chat inter
 | Laravel                      | 11.x / 12.x                   |
 | Filament                     | ^5.0                          |
 | Livewire                     | ^3.5 (ships with Filament v5) |
-| Laravel AI SDK               | ^0.10.0                       |
+| Laravel AI SDK               | ^0.10.0 || ^0.11.0            |
 | Spatie Laravel Package Tools | ^1.16                         |
 
 > **Note:** This package is built for **Filament v5** and **Livewire 3.5+** (as bundled with Filament v5). It leverages the official **Laravel AI SDK** (`laravel/ai`) for all AI operations.
