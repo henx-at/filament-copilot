@@ -50,9 +50,23 @@ class FilamentCopilotPlugin implements Plugin
 
     protected ?bool $respectAuthorization = null;
 
+    protected string | Closure $sidebarWidth = '20rem';
+
     public static function make(): static
     {
         return app(static::class);
+    }
+
+    public function sidebarWidth(string | Closure $width): static
+    {
+        $this->sidebarWidth = $width;
+
+        return $this;
+    }
+
+    public function getSidebarWidth(): ?string
+    {
+        return $this->sidebarWidth ?? '20rem';
     }
 
     public static function get(): static

@@ -33,6 +33,8 @@ class CopilotChat extends Component
 
     public array $quickActions = [];
 
+    public string $sidebarWidth = "20rem";
+
     public function mount(): void
     {
         $this->loadConversations();
@@ -40,6 +42,8 @@ class CopilotChat extends Component
         try {
             $plugin = FilamentCopilotPlugin::get();
             $this->quickActions = $plugin->getQuickActions();
+            $this->sidebarWidth = $plugin->getSidebarWidth();
+
         } catch (\Throwable) {
             $this->quickActions = config('filament-copilot.quick_actions', []);
         }
