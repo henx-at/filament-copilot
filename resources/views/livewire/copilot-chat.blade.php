@@ -305,7 +305,8 @@
         x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
         x-transition:leave="transition ease-in duration-200 transform" x-transition:leave-start="translate-x-0"
         x-transition:leave-end="translate-x-full"
-        class="copilot-chat-widget fixed inset-y-0 right-0 z-50 flex flex-col h-dvh w-screen max-w-md bg-white dark:bg-gray-900 shadow-xl ring-1 ring-gray-950/5 dark:ring-white/10 overflow-hidden">
+        style="max-width: {{ $sidebarWidth }};"
+        class="copilot-chat-widget fixed inset-y-0 right-0 z-50 flex flex-col h-dvh w-screen bg-white dark:bg-gray-900 shadow-xl ring-1 ring-gray-950/5 dark:ring-white/10 overflow-hidden">
 
         {{-- Header (sticky, matches Filament slide-over) --}}
         <div
