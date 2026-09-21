@@ -181,3 +181,180 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/*
+ * Chat answers: answers with a table use the full chat width, and the table
+ * scrolls horizontally inside the bubble instead of overflowing the drawer.
+ */
+.copilot-answer {
+    min-width: 0;
+    max-width: 85%;
+}
+
+.copilot-answer--wide {
+    flex: 1 1 auto;
+    max-width: 100%;
+}
+
+.copilot-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+}
+
+.copilot-table-scroll table {
+    width: max-content;
+    min-width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.copilot-table-scroll th,
+.copilot-table-scroll td {
+    padding: 0.25rem 0.5rem;
+    border-bottom: 1px solid var(--color-gray-200);
+    text-align: left;
+    white-space: nowrap;
+}
+
+.dark .copilot-table-scroll th,
+.dark .copilot-table-scroll td {
+    border-bottom-color: var(--color-gray-700);
+}
+
+.copilot-answer-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+}
+
+.copilot-copy-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-gray-500);
+}
+
+.copilot-copy-button:hover {
+    background-color: var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.dark .copilot-copy-button:hover {
+    background-color: var(--color-gray-800);
+    color: var(--color-gray-200);
+}
+
+/* Approval card. */
+.copilot-approval-card {
+    background-color: var(--warning-50);
+    border-color: var(--warning-200);
+}
+
+.copilot-approval-title {
+    color: var(--warning-700);
+}
+
+.copilot-approval-body {
+    color: var(--warning-800);
+}
+
+.dark .copilot-approval-card {
+    background-color: color-mix(in oklab, var(--warning-500) 10%, transparent);
+    border-color: color-mix(in oklab, var(--warning-400) 30%, transparent);
+}
+
+.dark .copilot-approval-title {
+    color: var(--warning-400);
+}
+
+.dark .copilot-approval-body {
+    color: var(--warning-200);
+}
+
+/*
+ * Tool-call bubbles. Light/dark utility pairs lost the cascade against app
+ * stylesheets loaded after this one, so the colours are pinned with
+ * two-class selectors.
+ */
+.copilot-tool.copilot-tool--done,
+.copilot-tool-panel.copilot-tool--done {
+    background-color: var(--success-50);
+    border-color: var(--success-200);
+}
+
+.copilot-tool.copilot-tool--error,
+.copilot-tool-panel.copilot-tool--error {
+    background-color: var(--danger-50);
+    border-color: var(--danger-200);
+}
+
+.copilot-tool.copilot-tool--running,
+.copilot-tool-panel.copilot-tool--running {
+    background-color: var(--gray-50);
+    border-color: var(--gray-200);
+}
+
+.copilot-tool .copilot-tool-name {
+    color: var(--gray-700);
+}
+
+.copilot-tool-panel .copilot-tool-label {
+    color: var(--gray-500);
+}
+
+.copilot-tool-panel .copilot-tool-pre {
+    color: var(--gray-600);
+}
+
+.dark .copilot-tool.copilot-tool--done,
+.dark .copilot-tool-panel.copilot-tool--done {
+    background-color: color-mix(in oklab, var(--success-500) 12%, transparent);
+    border-color: color-mix(in oklab, var(--success-400) 35%, transparent);
+}
+
+.dark .copilot-tool.copilot-tool--error,
+.dark .copilot-tool-panel.copilot-tool--error {
+    background-color: color-mix(in oklab, var(--danger-500) 12%, transparent);
+    border-color: color-mix(in oklab, var(--danger-400) 35%, transparent);
+}
+
+.dark .copilot-tool.copilot-tool--running,
+.dark .copilot-tool-panel.copilot-tool--running {
+    background-color: color-mix(in oklab, var(--gray-800) 60%, transparent);
+    border-color: var(--gray-700);
+}
+
+.dark .copilot-tool .copilot-tool-name {
+    color: var(--gray-200);
+}
+
+.dark .copilot-tool-panel .copilot-tool-label {
+    color: var(--gray-400);
+}
+
+.dark .copilot-tool-panel .copilot-tool-pre {
+    color: var(--gray-300);
+}
+
+/* Inline code in answers (ids etc.) was dark-on-dark in dark mode. */
+.copilot-answer :not(pre) > code {
+    padding: 0.05rem 0.3rem;
+    border-radius: 0.25rem;
+    background-color: color-mix(in oklab, var(--gray-500) 15%, transparent);
+    color: var(--gray-800);
+    font-size: 0.85em;
+}
+
+.copilot-answer :not(pre) > code::before,
+.copilot-answer :not(pre) > code::after {
+    content: none;
+}
+
+.dark .copilot-answer :not(pre) > code {
+    color: var(--gray-100);
+}

@@ -225,6 +225,12 @@
             this._abortController = null;
 
             if (this.pendingApprovals.length) {
+                // The early return skips copilot-stream-complete, so a
+                // first-turn conversation id would never reach $wire and the
+                // approval request could not resume it.
+                if (newConversationId && !$wire.conversationId) {
+                    $wire.conversationId = newConversationId;
+                }
                 this.isStreaming = false;
                 return;
             } else if (this.streamedContent || this.toolCalls.length) {
@@ -285,7 +291,7 @@
         this.startStreaming({
             message: null,
             decisions,
-            conversationId: this.conversationId,
+            conversationId: $wire.conversationId,
             panelId: @js(\Filament\Facades\Filament::getCurrentPanel()?->getId()),
             streamUrl: @js(route('filament-copilot.stream')),
             csrfToken: @js(csrf_token()),
@@ -450,15 +456,12 @@
                         </div>
                         <div class="min-w-0 max-w-[85%] w-full" x-data="{ toolOpen: false }">
                             <button @click="toolOpen = !toolOpen" type="button"
-                                class="flex items-center gap-2 px-3 py-2 w-full rounded-t-xl border transition-colors"
+                                class="copilot-tool flex items-center gap-2 px-3 py-2 w-full rounded-t-xl border transition-colors"
                                 :class="{
                                     'rounded-b-xl': !toolOpen,
-                                    'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800': tool
-                                        .status === 'running',
-                                    'bg-success-50 dark:bg-success-900/10 border-success-200 dark:border-success-800 hover:bg-success-100 dark:hover:bg-success-900/20': tool
-                                        .status === 'done',
-                                    'bg-danger-50 dark:bg-danger-900/10 border-danger-200 dark:border-danger-800 hover:bg-danger-100 dark:hover:bg-danger-900/20': tool
-                                        .status === 'error',
+                                    'copilot-tool--running': tool.status === 'running',
+                                    'copilot-tool--done': tool.status === 'done',
+                                    'copilot-tool--error': tool.status === 'error',
                                 }">
                                 <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 transition-transform duration-200"
                                     :class="{ 'rotate-90': toolOpen }" fill="none" viewBox="0 0 24 24"
@@ -484,31 +487,28 @@
                                     <x-filament::icon icon="heroicon-o-x-circle"
                                         class="w-3.5 h-3.5 text-danger-500" />
                                 </template>
-                                <span class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate"
+                                <span class="copilot-tool-name text-xs font-medium truncate"
                                     x-text="tool.name"></span>
                             </button>
-                            <div x-show="toolOpen" x-collapse class="px-3 py-2 border border-t-0 rounded-b-xl"
+                            <div x-show="toolOpen" x-collapse class="copilot-tool-panel px-3 py-2 border border-t-0 rounded-b-xl"
                                 :class="{
-                                    'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700': tool
-                                        .status === 'running',
-                                    'bg-success-50/50 dark:bg-success-900/5 border-success-200 dark:border-success-800': tool
-                                        .status === 'done',
-                                    'bg-danger-50/50 dark:bg-danger-900/5 border-danger-200 dark:border-danger-800': tool
-                                        .status === 'error',
+                                    'copilot-tool--running': tool.status === 'running',
+                                    'copilot-tool--done': tool.status === 'done',
+                                    'copilot-tool--error': tool.status === 'error',
                                 }">
                                 <template x-if="tool.arguments">
                                     <div class="mb-1">
                                         <span
-                                            class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Arguments</span>
-                                        <pre class="text-xs text-gray-600 dark:text-gray-400 font-mono whitespace-pre-wrap break-all mt-0.5 max-h-24 overflow-y-auto"
+                                            class="copilot-tool-label text-[10px] font-semibold uppercase tracking-wider">Arguments</span>
+                                        <pre class="copilot-tool-pre text-xs font-mono whitespace-pre-wrap break-all mt-0.5 max-h-24 overflow-y-auto"
                                             x-text="JSON.stringify(tool.arguments, null, 2)"></pre>
                                     </div>
                                 </template>
                                 <template x-if="tool.result">
                                     <div>
                                         <span
-                                            class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Result</span>
-                                        <pre class="text-xs text-gray-600 dark:text-gray-400 font-mono whitespace-pre-wrap break-all mt-0.5 max-h-24 overflow-y-auto"
+                                            class="copilot-tool-label text-[10px] font-semibold uppercase tracking-wider">Result</span>
+                                        <pre class="copilot-tool-pre text-xs font-mono whitespace-pre-wrap break-all mt-0.5 max-h-24 overflow-y-auto"
                                             x-text="tool.result"></pre>
                                     </div>
                                 </template>
@@ -528,28 +528,39 @@
 
                 {{-- Human approval requests --}}
                 <div x-show="pendingApprovals.length" x-cloak
-                    class="mx-1 rounded-xl border border-warning-200 bg-warning-50 p-3 dark:border-warning-800 dark:bg-warning-950/30">
-                    <div class="flex items-center gap-2 text-sm font-medium text-warning-700 dark:text-warning-300">
+                    class="copilot-approval-card mx-1 rounded-xl border p-3">
+                    {{-- Colours in resources/css/index.css (.copilot-approval-*):
+                         dark:bg-warning-950/30 was never generated, so the card
+                         stayed light in dark mode. --}}
+                    <div class="copilot-approval-title flex items-center gap-2 text-sm font-medium">
                         <x-filament::icon icon="heroicon-o-shield-exclamation" class="h-4 w-4" />
-                        <span>Approval required</span>
+                        <span>{{ __('filament-copilot::filament-copilot.approval_required') }}</span>
                     </div>
                     <template x-for="approval in pendingApprovals" :key="approval.id">
-                        <div class="mt-2 text-xs text-warning-800 dark:text-warning-200">
-                            <div class="font-medium" x-text="approval.tool"></div>
-                            <div x-show="approval.reason" x-text="approval.reason"></div>
-                            <pre class="mt-1 max-h-20 overflow-y-auto whitespace-pre-wrap break-all"
-                                x-text="JSON.stringify(approval.arguments, null, 2)"></pre>
+                        <div class="copilot-approval-body mt-2 text-xs">
+                            {{-- The approval reason (if the tool provides one) leads; the raw tool
+                                 name and arguments are available on demand. --}}
+                            <div x-show="approval.reason" x-text="approval.reason"
+                                style="white-space: pre-line; font-size: 0.8125rem; line-height: 1.4;"></div>
+                            <details class="mt-1">
+                                <summary style="cursor: pointer; opacity: 0.7;">{{ __('filament-copilot::filament-copilot.details') }}</summary>
+                                <div class="font-medium" x-text="approval.tool"></div>
+                                <pre class="mt-1 max-h-20 overflow-y-auto whitespace-pre-wrap break-all"
+                                    x-text="JSON.stringify(approval.arguments, null, 2)"></pre>
+                            </details>
                         </div>
                     </template>
                     <div class="mt-3 flex gap-2">
-                        <button type="button" @click="submitApprovals('approve')"
-                            class="rounded-lg bg-success-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-success-500">
-                            Approve
-                        </button>
-                        <button type="button" @click="submitApprovals('reject')"
-                            class="rounded-lg bg-danger-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-danger-500">
-                            Reject
-                        </button>
+                        {{-- Native Filament buttons: bg-success-600 / bg-danger-600 utilities
+                             weren't in any compiled CSS, so the buttons were almost invisible. --}}
+                        <x-filament::button type="button" size="xs" color="success"
+                            x-on:click="submitApprovals('approve')">
+                            {{ __('filament-copilot::filament-copilot.approve') }}
+                        </x-filament::button>
+                        <x-filament::button type="button" size="xs" color="danger" outlined
+                            x-on:click="submitApprovals('reject')">
+                            {{ __('filament-copilot::filament-copilot.reject') }}
+                        </x-filament::button>
                     </div>
                 </div>
 
