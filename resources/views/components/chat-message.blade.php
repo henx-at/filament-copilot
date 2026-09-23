@@ -9,7 +9,7 @@
 
 @if ($isUser)
     <div class="flex items-start gap-2.5 justify-end">
-        <div class="min-w-0 max-w-[85%] rounded-2xl rounded-tr-md px-3.5 py-2.5 bg-primary-600 text-white">
+        <div class="min-w-0 max-w-[85%] rounded-2xl rounded-tr-md px-3.5 py-2.5 bg-primary-400 text-primary-900">
             <p class="text-sm whitespace-pre-wrap wrap-break-word leading-relaxed">{{ $msg['content'] }}</p>
         </div>
         <div class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center shrink-0 mt-0.5">
@@ -119,7 +119,7 @@
     <div class="flex items-start gap-2.5">
         <div
             class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0 mt-0.5">
-            <x-filament::icon icon="heroicon-o-sparkles" class="w-4 h-4 text-primary-600 dark:text-primary-400" />
+            <x-filament::icon icon="heroicon-o-sparkles" class="w-4 h-4 text-primary-700 dark:text-primary-400" />
         </div>
         <div class="copilot-answer {{ $hasTable ? 'copilot-answer--wide' : '' }}">
             <div

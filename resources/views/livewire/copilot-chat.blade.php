@@ -320,7 +320,7 @@
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center">
                     <x-filament::icon icon="heroicon-o-sparkles"
-                        class="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                        class="w-5 h-5 text-primary-700 dark:text-primary-400" />
                 </div>
                 <h2 class="text-base font-semibold leading-6 text-gray-950 dark:text-white">
                     {{ __('filament-copilot::filament-copilot.title') }}</h2>
@@ -335,7 +335,7 @@
                 </button>
                 <button @click="toggleSidebar()" type="button"
                     class="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 w-8 h-8"
-                    :class="sidebarOpen ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400' :
+                    :class="sidebarOpen ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400' :
                         'hover:bg-gray-500/5 dark:hover:bg-gray-400/5 text-gray-400 dark:text-gray-400'"
                     title="{{ __('filament-copilot::filament-copilot.history') }}">
                     <x-filament::icon icon="heroicon-o-clock" class="w-5 h-5" />
@@ -394,7 +394,7 @@
             <div x-show="conversationLoading" x-transition.opacity.duration.200ms x-cloak
                 class="absolute inset-0 z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center">
                 <div class="flex flex-col items-center gap-3">
-                    <svg class="animate-spin w-7 h-7 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    <svg class="animate-spin w-7 h-7 text-primary-700 dark:text-primary-400" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                             stroke-width="4"></circle>
@@ -415,7 +415,7 @@
                         <div
                             class="w-14 h-14 rounded-2xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
                             <x-filament::icon icon="heroicon-o-sparkles"
-                                class="w-8 h-8 text-primary-400 dark:text-primary-500" />
+                                class="w-8 h-8 text-primary-700 dark:text-primary-400" />
                         </div>
                         <div>
                             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -570,7 +570,7 @@
                     <div
                         class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0 mt-0.5">
                         <x-filament::icon icon="heroicon-o-sparkles"
-                            class="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                            class="w-4 h-4 text-primary-700 dark:text-primary-400" />
                     </div>
                     <div
                         class="min-w-0 max-w-[85%] rounded-2xl rounded-tl-md px-3.5 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100">
@@ -579,7 +579,7 @@
                             <p x-text="streamedContent" class="whitespace-pre-wrap"></p>
                         </div>
                         <span x-show="isStreaming"
-                            class="inline-block w-1.5 h-4 bg-primary-500 animate-pulse rounded-sm ml-0.5 align-text-bottom"></span>
+                            class="inline-block w-1.5 h-4 bg-primary-700 dark:bg-primary-400 animate-pulse rounded-sm ml-0.5 align-text-bottom"></span>
                     </div>
                 </div>
 
@@ -588,7 +588,7 @@
                     <div
                         class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0 mt-0.5">
                         <x-filament::icon icon="heroicon-o-sparkles"
-                            class="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                            class="w-4 h-4 text-primary-700 dark:text-primary-400" />
                     </div>
                     <div
                         class="flex items-center gap-1.5 py-2.5 px-3.5 bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tl-md">
@@ -607,7 +607,7 @@
                         <div
                             class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0 mt-0.5">
                             <x-filament::icon icon="heroicon-o-sparkles"
-                                class="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                                class="w-4 h-4 text-primary-700 dark:text-primary-400" />
                         </div>
                         <div
                             class="flex items-center gap-1.5 py-2.5 px-3.5 bg-gray-100 dark:bg-gray-800 rounded-2xl rounded-tl-md">
@@ -633,7 +633,7 @@
                     style="max-height: 120px" placeholder="{{ __('filament-copilot::filament-copilot.input_placeholder') }}"
                     :disabled="$wire.isLoading || isStreaming"></textarea>
                 <button type="submit"
-                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary-600 hover:bg-primary-500 active:bg-primary-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary-400 hover:bg-primary-300 active:bg-primary-500 text-primary-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                     :disabled="$wire.isLoading || isStreaming">
                     <svg x-show="!isStreaming && !$wire.isLoading" class="w-4 h-4" viewBox="0 0 24 24"
                         fill="none" xmlns="http://www.w3.org/2000/svg">
