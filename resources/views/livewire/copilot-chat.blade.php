@@ -333,6 +333,8 @@
                     <x-filament::icon icon="heroicon-o-arrow-down-tray" class="w-5 h-5 text-gray-400 dark:text-gray-400"
                         wire:loading.class="animate-pulse" wire:target="exportConversation" />
                 </button>
+                {{-- Extension point for app-specific header actions (e.g. a "connect" link), rendered left of the history button --}}
+                {{ \Filament\Support\Facades\FilamentView::renderHook('filament-copilot::chat.header.history.before') }}
                 <button @click="toggleSidebar()" type="button"
                     class="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 w-8 h-8"
                     :class="sidebarOpen ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400' :
