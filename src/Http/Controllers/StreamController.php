@@ -33,6 +33,7 @@ class StreamController
             'decisions.*.result' => ['nullable', 'string'],
             'conversation_id' => ['nullable', 'string'],
             'panel_id' => ['required', 'string'],
+            'current_url' => ['nullable', 'string', 'max:2048'],
         ]);
 
         $panelId = $request->input('panel_id');

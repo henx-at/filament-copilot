@@ -128,6 +128,7 @@
                     message: params.message,
                     conversation_id: params.conversationId,
                     panel_id: params.panelId,
+                    current_url: params.currentUrl || (typeof window !== 'undefined' ? window.location.href : null),
                     decisions: params.decisions || undefined,
                 }),
                 signal: this._abortController.signal,

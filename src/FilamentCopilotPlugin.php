@@ -27,7 +27,7 @@ class FilamentCopilotPlugin implements Plugin
 
     protected ?string $model = null;
 
-    protected ?string $systemPrompt = null;
+    protected string | Closure | null $systemPrompt = null;
 
     /** @var array<\Laravel\Ai\Contracts\Tool> */
     protected array $globalTools = [];
@@ -127,7 +127,7 @@ class FilamentCopilotPlugin implements Plugin
         return $this->model ?? config('filament-copilot.model');
     }
 
-    public function systemPrompt(?string $prompt): static
+    public function systemPrompt(string | Closure | null $prompt): static
     {
         $this->systemPrompt = $prompt;
 
@@ -136,7 +136,16 @@ class FilamentCopilotPlugin implements Plugin
 
     public function getSystemPrompt(): ?string
     {
-        return $this->systemPrompt ?? config('filament-copilot.system_prompt');
+        $prompt = $this->systemPrompt ?? config('filament-copilot.system_prompt');
+
+        if ($prompt instanceof Closure) {
+            return (string) app()->call($prompt, [
+                'plugin' => $this,
+                'request' => request(),
+            ]);
+        }
+
+        return $prompt;
     }
 
     public function globalTools(array $tools): static
