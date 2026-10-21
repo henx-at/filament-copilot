@@ -257,3 +257,35 @@ it('pushes the assistant message without an id when the stream sends none', func
         'content' => 'Hello there',
     ]);
 });
+
+function dispatchedCopilotEvents(CopilotChat $chat): array
+{
+    return collect(Livewire\store($chat)->get('dispatched', []))
+        ->map(fn ($event) => $event->serialize())
+        ->where('name', 'copilot-tools-executed')
+        ->values()
+        ->all();
+}
+
+it('dispatches copilot-tools-executed with the successful tool names', function () {
+    swapFilamentForFeedbackTest(createTestUser());
+
+    $chat = new CopilotChat;
+    $chat->handleStreamComplete('Erledigt', null, [
+        ['name' => 'manage_dispo_vorlage', 'status' => 'done'],
+        ['name' => 'manage_dispo_vorlage', 'status' => 'done'],
+        ['name' => 'failing_tool', 'status' => 'error'],
+    ]);
+
+    expect(dispatchedCopilotEvents($chat))->toHaveCount(1)
+        ->and(dispatchedCopilotEvents($chat)[0]['params'])->toBe(['tools' => ['manage_dispo_vorlage']]);
+});
+
+it('does not dispatch copilot-tools-executed without a successful tool call', function () {
+    swapFilamentForFeedbackTest(createTestUser());
+
+    $chat = new CopilotChat;
+    $chat->handleStreamComplete('Hallo', null, [['name' => 'failing_tool', 'status' => 'error']]);
+
+    expect(dispatchedCopilotEvents($chat))->toBe([]);
+});

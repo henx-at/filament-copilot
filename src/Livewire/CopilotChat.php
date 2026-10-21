@@ -140,6 +140,19 @@ class CopilotChat extends Component
         $this->messages[] = $assistantMessage;
 
         $this->loadConversations();
+
+        // Lets the host page reload data a tool may have changed (e.g. an open edit form).
+        $executedTools = collect($toolCalls ?? [])
+            ->where('status', 'done')
+            ->pluck('name')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($executedTools !== []) {
+            $this->dispatch('copilot-tools-executed', tools: $executedTools);
+        }
     }
 
     /**
