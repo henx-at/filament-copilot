@@ -188,6 +188,16 @@
                                         this.toolCalls[idx].status = data.success ? 'done' : 'error';
                                         this.toolCalls[idx].result = data.result;
                                         this.toolCalls[idx].error = data.error;
+                                    } else {
+                                        // An approved tool runs in the resumed stream without a preceding tool_call event.
+                                        this.toolCalls.push({
+                                            id: data.tool_id,
+                                            name: data.tool_name,
+                                            arguments: null,
+                                            status: data.success ? 'done' : 'error',
+                                            result: data.result,
+                                            error: data.error,
+                                        });
                                     }
                                 }
                                 this.$nextTick(() => this.scrollToBottom());
