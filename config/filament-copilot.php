@@ -147,6 +147,9 @@ return [
 
     'feedback' => [
         'enabled' => true,
+        // After a thumbs down, ask whether the conversation may be shared
+        // with reviewers (CopilotConversation::isSharedForReview()).
+        'share_for_review' => false,
     ],
 
     /*

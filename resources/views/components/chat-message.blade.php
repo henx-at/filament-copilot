@@ -175,6 +175,20 @@
                     </div>
                 @endif
                 </div>
+                @if ($showFeedback && ($sharePromptMessageId ?? null) === $messageId)
+                    <div class="copilot-share-prompt mt-2 rounded-lg border px-3 py-2 text-xs" role="dialog"
+                        aria-label="{{ __('filament-copilot::filament-copilot.share_question') }}">
+                        <p>{{ __('filament-copilot::filament-copilot.share_question') }}</p>
+                        <div class="mt-2 flex gap-2">
+                            <x-filament::button type="button" size="xs" wire:click="shareForReview">
+                                {{ __('filament-copilot::filament-copilot.share') }}
+                            </x-filament::button>
+                            <x-filament::button type="button" size="xs" color="gray" outlined wire:click="dismissSharePrompt">
+                                {{ __('filament-copilot::filament-copilot.rate_only') }}
+                            </x-filament::button>
+                        </div>
+                    </div>
+                @endif
             @endif
         </div>
     </div>

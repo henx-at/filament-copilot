@@ -44,6 +44,12 @@ class CopilotChat extends Component
 
     public ?string $notice = null;
 
+    /**
+     * Assistant message whose "not helpful" rating asks to share the
+     * conversation for review (feedback.share_for_review).
+     */
+    public ?string $sharePromptMessageId = null;
+
     public function mount(string $mode = 'drawer', ?string $conversation = null): void
     {
         $this->mode = $mode === 'page' ? 'page' : 'drawer';
@@ -268,6 +274,48 @@ class CopilotChat extends Component
         ]);
 
         $this->applyRatingToMessages($messageId, $message->rating?->value);
+
+        $this->sharePromptMessageId = config('filament-copilot.feedback.share_for_review', false)
+            && $message->rating === MessageRating::Negative
+            && ! $message->conversation->isSharedForReview()
+                ? $messageId
+                : null;
+    }
+
+    /**
+     * Shares the current conversation for review, only on the participant's
+     * own explicit click (never implied by the rating itself).
+     */
+    public function shareForReview(): void
+    {
+        $this->sharePromptMessageId = null;
+        $conversation = $this->ownConversation($this->conversationId);
+
+        if ($conversation && config('filament-copilot.feedback.share_for_review', false)) {
+            $conversation->shareForReview();
+            $this->dispatch('copilot-refresh-sidebar');
+        }
+    }
+
+    public function dismissSharePrompt(): void
+    {
+        $this->sharePromptMessageId = null;
+    }
+
+    protected function ownConversation(?string $conversationId): ?CopilotConversation
+    {
+        $user = Filament::auth()->user();
+        $panelId = Filament::getCurrentPanel()?->getId();
+
+        if (! $conversationId || ! $user || ! $panelId) {
+            return null;
+        }
+
+        return CopilotConversation::query()
+            ->forPanel($panelId)
+            ->forParticipant($user)
+            ->forTenant(Filament::getTenant())
+            ->find($conversationId);
     }
 
     /**

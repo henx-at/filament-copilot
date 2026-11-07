@@ -452,3 +452,24 @@
     background-color: color-mix(in oklab, var(--warning-500) 10%, transparent);
     color: var(--warning-200);
 }
+
+/* Share-for-review prompt after a thumbs down, and the "shared" marker. */
+.copilot-share-prompt {
+    background-color: var(--gray-50);
+    border-color: var(--gray-200);
+}
+
+.dark .copilot-share-prompt {
+    background-color: color-mix(in oklab, white 5%, transparent);
+    border-color: color-mix(in oklab, white 10%, transparent);
+}
+
+.copilot-shared-badge {
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+}
+
+.dark .copilot-shared-badge {
+    background-color: color-mix(in oklab, var(--primary-500) 15%, transparent);
+    color: var(--primary-300);
+}
