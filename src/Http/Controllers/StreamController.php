@@ -73,6 +73,15 @@ class StreamController
             });
         }
 
+        $blockMessage = $decisions ? null : $plugin->getMessageBlock($user, $tenant);
+
+        if ($blockMessage !== null) {
+            return $this->sseResponse(function () use ($blockMessage) {
+                $this->sendSseEvent('error', ['message' => $blockMessage]);
+                $this->sendSseEvent('done', []);
+            });
+        }
+
         /** @var ConversationManager $conversationManager */
         $conversationManager = app(ConversationManager::class);
 
@@ -238,7 +247,14 @@ class StreamController
                         }
                     } elseif (get_class($event) === 'Laravel\\Ai\\Streaming\\Events\\ToolApprovalRequest') {
                         foreach ($event->pendingApprovals as $approval) {
-                            $pendingApprovals[] = $approval->toArray();
+                            $pendingApproval = $approval->toArray();
+                            $previewHtml = $this->renderPreview(fn (): ?array => $plugin->getApprovalPreview($approval->tool, $approval->arguments));
+
+                            if ($previewHtml !== null) {
+                                $pendingApproval['preview_html'] = $previewHtml;
+                            }
+
+                            $pendingApprovals[] = $pendingApproval;
 
                             if ($shouldLogToolCalls && $userMessage) {
                                 $toolCall = $toolCallsByProviderId[$approval->id] ?? $userMessage->toolCalls()
@@ -349,6 +365,25 @@ class StreamController
                 $this->sendSseEvent('done', []);
             }
         });
+    }
+
+    /**
+     * Renders a host-built change preview. A failing preview must never
+     * block the approval itself, so errors fall back to the plain card.
+     *
+     * @param  callable(): ?array<string, mixed>  $preview
+     */
+    protected function renderPreview(callable $preview): ?string
+    {
+        try {
+            $data = $preview();
+
+            return $data ? view('filament-copilot::components.change-preview', ['preview' => $data])->render() : null;
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
     }
 
     protected function sseResponse(callable $callback): StreamedResponse

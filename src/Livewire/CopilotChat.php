@@ -35,14 +35,41 @@ class CopilotChat extends Component
 
     public string $sidebarWidth = "20rem";
 
-    public function mount(): void
+    /**
+     * 'drawer' (slide-over, default) or 'page' (embedded full-page chat).
+     */
+    public string $mode = 'drawer';
+
+    public ?string $fullPageUrl = null;
+
+    public ?string $notice = null;
+
+    /**
+     * Assistant message whose "not helpful" rating asks to share the
+     * conversation for review (feedback.share_for_review).
+     */
+    public ?string $sharePromptMessageId = null;
+
+    public function mount(string $mode = 'drawer', ?string $conversation = null): void
     {
+        $this->mode = $mode === 'page' ? 'page' : 'drawer';
         $this->loadConversations();
+
+        if ($this->mode === 'page') {
+            $this->isOpen = true;
+
+            if (filled($conversation)) {
+                // Scoped to the current participant, panel and tenant like every load.
+                $this->loadConversation($conversation);
+            }
+        }
 
         try {
             $plugin = FilamentCopilotPlugin::get();
             $this->quickActions = $plugin->getQuickActions();
             $this->sidebarWidth = $plugin->getSidebarWidth();
+            $this->fullPageUrl = $this->mode === 'drawer' ? $plugin->getFullPageUrl() : null;
+            $this->notice = $plugin->getChatNotice();
 
         } catch (\Throwable) {
             $this->quickActions = config('filament-copilot.quick_actions', []);
@@ -61,7 +88,7 @@ class CopilotChat extends Component
 
     public function close(): void
     {
-        $this->isOpen = false;
+        $this->isOpen = $this->mode === 'page';
     }
 
     public function getStreamUrl(): string
@@ -112,14 +139,19 @@ class CopilotChat extends Component
         // Add tool calls as collapsible messages
         if ($toolCalls) {
             foreach ($toolCalls as $toolCall) {
+                $success = ($toolCall['status'] ?? null) === 'done';
+
                 $this->messages[] = [
                     'role' => 'tool_call',
                     'tool_name' => $toolCall['name'] ?? 'Tool',
                     'arguments' => $toolCall['arguments'] ?? null,
                     'result' => $toolCall['result'] ?? null,
-                    'success' => $toolCall['status'] === 'done',
+                    'success' => $success,
                     'error' => $toolCall['error'] ?? null,
                     'content' => $toolCall['result'] ?? '',
+                    // Built on the server from what the client reports; the
+                    // host callback must only resolve records the user may see.
+                    'preview' => $success ? $this->toolResultPreview($toolCall) : null,
                 ];
             }
         }
@@ -140,6 +172,7 @@ class CopilotChat extends Component
         $this->messages[] = $assistantMessage;
 
         $this->loadConversations();
+        $this->refreshNotice();
 
         // Lets the host page reload data a tool may have changed (e.g. an open edit form).
         $executedTools = collect($toolCalls ?? [])
@@ -152,6 +185,40 @@ class CopilotChat extends Component
 
         if ($executedTools !== []) {
             $this->dispatch('copilot-tools-executed', tools: $executedTools);
+        }
+    }
+
+    protected function refreshNotice(): void
+    {
+        try {
+            $this->notice = FilamentCopilotPlugin::get()->getChatNotice();
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $toolCall
+     * @return array<string, mixed>|null
+     */
+    protected function toolResultPreview(array $toolCall): ?array
+    {
+        $name = $toolCall['name'] ?? null;
+
+        if (! is_string($name) || $name === '') {
+            return null;
+        }
+
+        try {
+            return FilamentCopilotPlugin::get()->getToolResultPreview(
+                $name,
+                is_array($toolCall['arguments'] ?? null) ? $toolCall['arguments'] : null,
+                is_string($toolCall['result'] ?? null) ? $toolCall['result'] : null,
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
         }
     }
 
@@ -207,6 +274,48 @@ class CopilotChat extends Component
         ]);
 
         $this->applyRatingToMessages($messageId, $message->rating?->value);
+
+        $this->sharePromptMessageId = config('filament-copilot.feedback.share_for_review', false)
+            && $message->rating === MessageRating::Negative
+            && ! $message->conversation->isSharedForReview()
+                ? $messageId
+                : null;
+    }
+
+    /**
+     * Shares the current conversation for review, only on the participant's
+     * own explicit click (never implied by the rating itself).
+     */
+    public function shareForReview(): void
+    {
+        $this->sharePromptMessageId = null;
+        $conversation = $this->ownConversation($this->conversationId);
+
+        if ($conversation && config('filament-copilot.feedback.share_for_review', false)) {
+            $conversation->shareForReview();
+            $this->dispatch('copilot-refresh-sidebar');
+        }
+    }
+
+    public function dismissSharePrompt(): void
+    {
+        $this->sharePromptMessageId = null;
+    }
+
+    protected function ownConversation(?string $conversationId): ?CopilotConversation
+    {
+        $user = Filament::auth()->user();
+        $panelId = Filament::getCurrentPanel()?->getId();
+
+        if (! $conversationId || ! $user || ! $panelId) {
+            return null;
+        }
+
+        return CopilotConversation::query()
+            ->forPanel($panelId)
+            ->forParticipant($user)
+            ->forTenant(Filament::getTenant())
+            ->find($conversationId);
     }
 
     /**
@@ -234,6 +343,8 @@ class CopilotChat extends Component
             'role' => 'system',
             'content' => __('filament-copilot::filament-copilot.error_occurred').': '.$error,
         ];
+
+        $this->refreshNotice();
     }
 
     protected function getConversationMessages($conversation): array

@@ -36,6 +36,17 @@
                         @endif
                     </p>
                 </button>
+                @if ($conv['shared'] ?? false)
+                    <button wire:click="unshareConversation('{{ $conv['id'] }}')"
+                        wire:confirm="{{ __('filament-copilot::filament-copilot.confirm_unshare') }}"
+                        type="button"
+                        class="copilot-shared-badge inline-flex items-center gap-1 shrink-0 rounded-md px-1.5 py-0.5 text-[11px]"
+                        title="{{ __('filament-copilot::filament-copilot.unshare') }}"
+                        aria-label="{{ __('filament-copilot::filament-copilot.unshare') }}">
+                        <x-filament::icon icon="heroicon-o-eye" class="w-3.5 h-3.5" />
+                        {{ __('filament-copilot::filament-copilot.shared') }}
+                    </button>
+                @endif
                 <button wire:click="deleteConversation('{{ $conv['id'] }}')"
                     wire:confirm="{{ __('filament-copilot::filament-copilot.confirm_delete') }}"
                     wire:loading.attr="disabled" type="button"

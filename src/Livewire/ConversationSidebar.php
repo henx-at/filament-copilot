@@ -100,6 +100,28 @@ class ConversationSidebar extends Component
         $this->loadConversations();
     }
 
+    /**
+     * Withdraws the participant's consent to share a conversation for review.
+     */
+    public function unshareConversation(string $conversationId): void
+    {
+        $user = Filament::auth()->user();
+        $panelId = Filament::getCurrentPanel()?->getId();
+
+        if (! $user || ! $panelId) {
+            return;
+        }
+
+        CopilotConversation::query()
+            ->forPanel($panelId)
+            ->forParticipant($user)
+            ->forTenant(Filament::getTenant())
+            ->find($conversationId)
+            ?->unshareForReview();
+
+        $this->loadConversations();
+    }
+
     public function newConversation(): void
     {
         $this->activeConversationId = null;
@@ -131,6 +153,7 @@ class ConversationSidebar extends Component
                 'title' => $c->title,
                 'updated_at' => $c->updated_at->diffForHumans(),
                 'message_count' => $c->messages_count ?? $c->messages()->count(),
+                'shared' => $c->isSharedForReview(),
             ])
             ->toArray();
     }

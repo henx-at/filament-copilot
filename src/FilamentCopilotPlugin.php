@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EslamRedaDiv\FilamentCopilot;
 
 use Closure;
+use EslamRedaDiv\FilamentCopilot\Pages\CopilotChatPage;
 use EslamRedaDiv\FilamentCopilot\Pages\CopilotDashboardPage;
 use EslamRedaDiv\FilamentCopilot\Resources\CopilotAuditLogs\CopilotAuditLogResource;
 use EslamRedaDiv\FilamentCopilot\Resources\CopilotConversations\CopilotConversationResource;
@@ -52,6 +53,19 @@ class FilamentCopilotPlugin implements Plugin
 
     protected string | Closure $sidebarWidth = '20rem';
 
+    protected ?Closure $approvalPreviewUsing = null;
+
+    protected bool $fullPage = false;
+
+    /** @var class-string<CopilotChatPage> */
+    protected string $fullPageClass = CopilotChatPage::class;
+
+    protected ?Closure $messageBlockUsing = null;
+
+    protected ?Closure $chatNoticeUsing = null;
+
+    protected ?Closure $toolResultPreviewUsing = null;
+
     public static function make(): static
     {
         return app(static::class);
@@ -67,6 +81,124 @@ class FilamentCopilotPlugin implements Plugin
     public function getSidebarWidth(): ?string
     {
         return $this->sidebarWidth ?? '20rem';
+    }
+
+    /**
+     * Host-defined gate for new messages (e.g. a spending budget). The
+     * closure receives (Authenticatable $user, ?Model $tenant) and returns
+     * the message to show instead of answering, or null to proceed.
+     * Approval decisions of a running turn are never blocked.
+     */
+    public function messageBlockUsing(?Closure $callback): static
+    {
+        $this->messageBlockUsing = $callback;
+
+        return $this;
+    }
+
+    public function getMessageBlock(Authenticatable $user, ?\Illuminate\Database\Eloquent\Model $tenant): ?string
+    {
+        return $this->messageBlockUsing ? ($this->messageBlockUsing)($user, $tenant) : null;
+    }
+
+    /**
+     * Host-defined notice shown above the chat input (e.g. "80 % of the
+     * budget used"). Re-evaluated after every answer; null hides it.
+     */
+    public function chatNoticeUsing(?Closure $callback): static
+    {
+        $this->chatNoticeUsing = $callback;
+
+        return $this;
+    }
+
+    public function getChatNotice(): ?string
+    {
+        return $this->chatNoticeUsing ? ($this->chatNoticeUsing)() : null;
+    }
+
+    /**
+     * Registers the full-page chat (CopilotChatPage) and an "open full page"
+     * button in the drawer header. The drawer is hidden on that page.
+     */
+    /**
+     * @param  class-string<CopilotChatPage>|null  $page  a subclass, e.g. to add app interfaces
+     */
+    public function fullPage(bool $enabled = true, ?string $page = null): static
+    {
+        $this->fullPage = $enabled;
+        $this->fullPageClass = $page ?? CopilotChatPage::class;
+
+        return $this;
+    }
+
+    public function isFullPageEnabled(): bool
+    {
+        return $this->fullPage;
+    }
+
+    public function getFullPageUrl(): ?string
+    {
+        if (! $this->fullPage || ! $this->fullPageClass::canAccess()) {
+            return null;
+        }
+
+        try {
+            return $this->fullPageClass::getUrl();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function isOnFullPage(): bool
+    {
+        return $this->fullPage && request()->routeIs($this->fullPageClass::getRouteName());
+    }
+
+    /**
+     * Structured preview for the approval card of a write tool, rendered by
+     * the `change-preview` component instead of the plain approval reason.
+     *
+     * The closure receives (string $tool, array $arguments) and returns the
+     * preview array (see getApprovalPreview()) or null for the plain card.
+     */
+    public function approvalPreviewUsing(?Closure $callback): static
+    {
+        $this->approvalPreviewUsing = $callback;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, mixed>  $arguments
+     * @return array{title?: string, tone?: string, records?: list<array{label: string, url?: ?string, icon?: mixed, color?: mixed}>, fields?: list<array{label: string, old?: ?string, new?: ?string}>, notes?: list<string>}|null
+     */
+    public function getApprovalPreview(string $tool, array $arguments): ?array
+    {
+        return $this->approvalPreviewUsing ? ($this->approvalPreviewUsing)($tool, $arguments) : null;
+    }
+
+    /**
+     * Preview shown under an executed tool call (e.g. a link to the record
+     * it created). The closure receives (string $tool, ?array $arguments,
+     * ?string $result) and returns the same shape as getApprovalPreview().
+     * It is re-evaluated on the server, so it must only resolve data the
+     * current user may see.
+     */
+    public function toolResultPreviewUsing(?Closure $callback): static
+    {
+        $this->toolResultPreviewUsing = $callback;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $arguments
+     * @return array<string, mixed>|null
+     */
+    public function getToolResultPreview(string $tool, ?array $arguments, ?string $result): ?array
+    {
+        return $this->toolResultPreviewUsing ? ($this->toolResultPreviewUsing)($tool, $arguments, $result) : null;
     }
 
     public static function get(): static
@@ -291,6 +423,10 @@ class FilamentCopilotPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        if ($this->fullPage) {
+            $panel->pages([$this->fullPageClass]);
+        }
+
         if ($this->isManagementEnabled()) {
             $panel->resources([
                 CopilotConversationResource::class,
@@ -309,7 +445,7 @@ class FilamentCopilotPlugin implements Plugin
         // Place the trigger button in the top bar next to global search
         FilamentView::registerRenderHook(
             PanelsRenderHook::GLOBAL_SEARCH_AFTER,
-            fn (): string => $this->isAuthorized()
+            fn (): string => $this->isAuthorized() && ! $this->isOnFullPage()
                 ? Blade::render('@livewire(\'filament-copilot-button\')')
                 : '',
         );
@@ -317,7 +453,7 @@ class FilamentCopilotPlugin implements Plugin
         // Place the chat modal at the end of the body
         FilamentView::registerRenderHook(
             PanelsRenderHook::BODY_END,
-            fn (): string => $this->isAuthorized()
+            fn (): string => $this->isAuthorized() && ! $this->isOnFullPage()
                 ? Blade::render('@livewire(\'filament-copilot-chat\')')
                 : '',
         );
