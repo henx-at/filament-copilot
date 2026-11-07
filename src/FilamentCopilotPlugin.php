@@ -57,6 +57,9 @@ class FilamentCopilotPlugin implements Plugin
 
     protected bool $fullPage = false;
 
+    /** @var class-string<CopilotChatPage> */
+    protected string $fullPageClass = CopilotChatPage::class;
+
     protected ?Closure $messageBlockUsing = null;
 
     protected ?Closure $chatNoticeUsing = null;
@@ -118,9 +121,13 @@ class FilamentCopilotPlugin implements Plugin
      * Registers the full-page chat (CopilotChatPage) and an "open full page"
      * button in the drawer header. The drawer is hidden on that page.
      */
-    public function fullPage(bool $enabled = true): static
+    /**
+     * @param  class-string<CopilotChatPage>|null  $page  a subclass, e.g. to add app interfaces
+     */
+    public function fullPage(bool $enabled = true, ?string $page = null): static
     {
         $this->fullPage = $enabled;
+        $this->fullPageClass = $page ?? CopilotChatPage::class;
 
         return $this;
     }
@@ -132,12 +139,12 @@ class FilamentCopilotPlugin implements Plugin
 
     public function getFullPageUrl(): ?string
     {
-        if (! $this->fullPage || ! CopilotChatPage::canAccess()) {
+        if (! $this->fullPage || ! $this->fullPageClass::canAccess()) {
             return null;
         }
 
         try {
-            return CopilotChatPage::getUrl();
+            return $this->fullPageClass::getUrl();
         } catch (\Throwable) {
             return null;
         }
@@ -145,7 +152,7 @@ class FilamentCopilotPlugin implements Plugin
 
     protected function isOnFullPage(): bool
     {
-        return $this->fullPage && request()->routeIs(CopilotChatPage::getRouteName());
+        return $this->fullPage && request()->routeIs($this->fullPageClass::getRouteName());
     }
 
     /**
@@ -417,7 +424,7 @@ class FilamentCopilotPlugin implements Plugin
     public function register(Panel $panel): void
     {
         if ($this->fullPage) {
-            $panel->pages([CopilotChatPage::class]);
+            $panel->pages([$this->fullPageClass]);
         }
 
         if ($this->isManagementEnabled()) {
