@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace EslamRedaDiv\FilamentCopilot;
 
 use Closure;
+use EslamRedaDiv\FilamentCopilot\Pages\CopilotChatPage;
 use EslamRedaDiv\FilamentCopilot\Pages\CopilotDashboardPage;
 use EslamRedaDiv\FilamentCopilot\Resources\CopilotAuditLogs\CopilotAuditLogResource;
 use EslamRedaDiv\FilamentCopilot\Resources\CopilotConversations\CopilotConversationResource;
@@ -54,6 +55,8 @@ class FilamentCopilotPlugin implements Plugin
 
     protected ?Closure $approvalPreviewUsing = null;
 
+    protected bool $fullPage = false;
+
     protected ?Closure $toolResultPreviewUsing = null;
 
     public static function make(): static
@@ -71,6 +74,40 @@ class FilamentCopilotPlugin implements Plugin
     public function getSidebarWidth(): ?string
     {
         return $this->sidebarWidth ?? '20rem';
+    }
+
+    /**
+     * Registers the full-page chat (CopilotChatPage) and an "open full page"
+     * button in the drawer header. The drawer is hidden on that page.
+     */
+    public function fullPage(bool $enabled = true): static
+    {
+        $this->fullPage = $enabled;
+
+        return $this;
+    }
+
+    public function isFullPageEnabled(): bool
+    {
+        return $this->fullPage;
+    }
+
+    public function getFullPageUrl(): ?string
+    {
+        if (! $this->fullPage || ! CopilotChatPage::canAccess()) {
+            return null;
+        }
+
+        try {
+            return CopilotChatPage::getUrl();
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function isOnFullPage(): bool
+    {
+        return $this->fullPage && request()->routeIs(CopilotChatPage::getRouteName());
     }
 
     /**
@@ -341,6 +378,10 @@ class FilamentCopilotPlugin implements Plugin
 
     public function register(Panel $panel): void
     {
+        if ($this->fullPage) {
+            $panel->pages([CopilotChatPage::class]);
+        }
+
         if ($this->isManagementEnabled()) {
             $panel->resources([
                 CopilotConversationResource::class,
@@ -359,7 +400,7 @@ class FilamentCopilotPlugin implements Plugin
         // Place the trigger button in the top bar next to global search
         FilamentView::registerRenderHook(
             PanelsRenderHook::GLOBAL_SEARCH_AFTER,
-            fn (): string => $this->isAuthorized()
+            fn (): string => $this->isAuthorized() && ! $this->isOnFullPage()
                 ? Blade::render('@livewire(\'filament-copilot-button\')')
                 : '',
         );
@@ -367,7 +408,7 @@ class FilamentCopilotPlugin implements Plugin
         // Place the chat modal at the end of the body
         FilamentView::registerRenderHook(
             PanelsRenderHook::BODY_END,
-            fn (): string => $this->isAuthorized()
+            fn (): string => $this->isAuthorized() && ! $this->isOnFullPage()
                 ? Blade::render('@livewire(\'filament-copilot-chat\')')
                 : '',
         );

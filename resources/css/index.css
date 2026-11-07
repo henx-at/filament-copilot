@@ -420,3 +420,24 @@
 .copilot-tool-preview {
     margin-top: 0.375rem;
 }
+
+/* Full-page chat (CopilotChatPage): fills the viewport below the panel header. */
+.copilot-chat-widget--page {
+    height: calc(100dvh - 11rem);
+    min-height: 28rem;
+}
+
+@media (min-width: 1024px) {
+    .copilot-chat-widget--page .copilot-history {
+        position: relative;
+        inset: auto;
+        z-index: auto;
+        width: 18rem;
+        flex-shrink: 0;
+        border-inline-end: 1px solid var(--gray-200);
+    }
+
+    .dark .copilot-chat-widget--page .copilot-history {
+        border-inline-end-color: color-mix(in oklab, white 10%, transparent);
+    }
+}

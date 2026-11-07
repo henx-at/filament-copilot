@@ -35,14 +35,32 @@ class CopilotChat extends Component
 
     public string $sidebarWidth = "20rem";
 
-    public function mount(): void
+    /**
+     * 'drawer' (slide-over, default) or 'page' (embedded full-page chat).
+     */
+    public string $mode = 'drawer';
+
+    public ?string $fullPageUrl = null;
+
+    public function mount(string $mode = 'drawer', ?string $conversation = null): void
     {
+        $this->mode = $mode === 'page' ? 'page' : 'drawer';
         $this->loadConversations();
+
+        if ($this->mode === 'page') {
+            $this->isOpen = true;
+
+            if (filled($conversation)) {
+                // Scoped to the current participant, panel and tenant like every load.
+                $this->loadConversation($conversation);
+            }
+        }
 
         try {
             $plugin = FilamentCopilotPlugin::get();
             $this->quickActions = $plugin->getQuickActions();
             $this->sidebarWidth = $plugin->getSidebarWidth();
+            $this->fullPageUrl = $this->mode === 'drawer' ? $plugin->getFullPageUrl() : null;
 
         } catch (\Throwable) {
             $this->quickActions = config('filament-copilot.quick_actions', []);
@@ -61,7 +79,7 @@ class CopilotChat extends Component
 
     public function close(): void
     {
-        $this->isOpen = false;
+        $this->isOpen = $this->mode === 'page';
     }
 
     public function getStreamUrl(): string

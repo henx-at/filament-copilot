@@ -1,6 +1,9 @@
+@php($isPage = $mode === 'page')
 <div x-data="{
     open: @entangle('isOpen'),
-    sidebarOpen: false,
+    isPage: @js($isPage),
+    // Full-page mode keeps the history as a left column on wide screens.
+    sidebarOpen: @js($isPage) && window.matchMedia('(min-width: 1024px)').matches,
     sidebarLoading: false,
     conversationLoading: false,
     streamingEnabled: true,
@@ -21,7 +24,7 @@
                     this.scrollToBottom();
                     this.focusInput();
                 });
-            } else {
+            } else if (! this.isPage) {
                 this.sidebarOpen = false;
             }
         });
@@ -58,7 +61,7 @@
         this._cleanups.push(
             Livewire.on('copilot-load-conversation', () => {
                 this.conversationLoading = true;
-                this.sidebarOpen = false;
+                this.closeSidebarUnlessPinned();
             })
         );
     },
@@ -71,6 +74,11 @@
         if (this._abortController) {
             this._abortController.abort();
             this._abortController = null;
+        }
+    },
+    closeSidebarUnlessPinned() {
+        if (! this.isPage || ! window.matchMedia('(min-width: 1024px)').matches) {
+            this.sidebarOpen = false;
         }
     },
     scrollToBottom() {
@@ -308,15 +316,23 @@
             csrfToken: @js(csrf_token()),
         });
     }
-}" x-cloak @copilot-open.window="open = true" @copilot-close-sidebar.window="sidebarOpen = false"
-    @copilot-load-conversation.window="sidebarOpen = false" @keydown.escape.window="if(open) open = false">
+}" x-cloak @if (! $isPage) @copilot-open.window="open = true" @endif @copilot-close-sidebar.window="closeSidebarUnlessPinned()"
+    @copilot-load-conversation.window="closeSidebarUnlessPinned()" @keydown.escape.window="if(open && !isPage) open = false"
+    @class(['copilot-chat-page' => $isPage])>
 
+    @if (! $isPage)
     {{-- Backdrop overlay --}}
     <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="open = false"
         class="fixed inset-0 z-40 bg-gray-950/50 dark:bg-gray-950/75"></div>
 
+    @endif
+
+    @if ($isPage)
+    {{-- Full-page chat: in the page flow, height set in resources/css/index.css --}}
+    <div class="copilot-chat-widget copilot-chat-widget--page relative flex flex-col w-full bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 overflow-hidden">
+    @else
     {{-- Slide-over drawer --}}
     <div x-show="open" x-transition:enter="transition ease-out duration-300 transform"
         x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
@@ -324,11 +340,17 @@
         x-transition:leave-end="translate-x-full"
         style="max-width: {{ $sidebarWidth }};"
         class="copilot-chat-widget fixed inset-y-0 right-0 z-50 flex flex-col h-dvh w-screen bg-white dark:bg-gray-900 shadow-xl ring-1 ring-gray-950/5 dark:ring-white/10 overflow-hidden">
+    @endif
 
         {{-- Header (sticky, matches Filament slide-over) --}}
         <div
-            class="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shrink-0">
-            <div class="flex items-center gap-3">
+            @class([
+                'sticky top-0 z-10 flex items-center px-6 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shrink-0',
+                'justify-between py-4' => ! $isPage,
+                'justify-end py-2' => $isPage,
+            ])>
+            {{-- The full page already shows the title in its heading. --}}
+            <div @class(['flex items-center gap-3', 'hidden' => $isPage])>
                 <div class="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center">
                     <x-filament::icon icon="heroicon-o-sparkles"
                         class="w-5 h-5 text-primary-700 dark:text-primary-400" />
@@ -344,6 +366,14 @@
                     <x-filament::icon icon="heroicon-o-arrow-down-tray" class="w-5 h-5 text-gray-400 dark:text-gray-400"
                         wire:loading.class="animate-pulse" wire:target="exportConversation" />
                 </button>
+                @if ($fullPageUrl)
+                    <a :href="@js($fullPageUrl) + ($wire.conversationId ? '?conversation=' + encodeURIComponent($wire.conversationId) : '')"
+                        class="fi-icon-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 fi-color-gray w-8 h-8"
+                        title="{{ __('filament-copilot::filament-copilot.open_full_page') }}"
+                        aria-label="{{ __('filament-copilot::filament-copilot.open_full_page') }}">
+                        <x-filament::icon icon="heroicon-o-arrows-pointing-out" class="w-5 h-5 text-gray-400 dark:text-gray-400" />
+                    </a>
+                @endif
                 {{-- Extension point for app-specific header actions (e.g. a "connect" link), rendered left of the history button --}}
                 {{ \Filament\Support\Facades\FilamentView::renderHook('filament-copilot::chat.header.history.before') }}
                 <button @click="toggleSidebar()" type="button"
@@ -358,7 +388,7 @@
                     title="{{ __('filament-copilot::filament-copilot.new_conversation') }}">
                     <x-filament::icon icon="heroicon-o-plus" class="w-5 h-5 text-gray-400 dark:text-gray-400" />
                 </button>
-                <button @click="open = false" type="button"
+                <button x-show="!isPage" @click="open = false" type="button"
                     class="fi-icon-btn fi-modal-close-btn relative flex items-center justify-center rounded-lg outline-none transition duration-75 focus-visible:ring-2 hover:bg-gray-500/5 dark:hover:bg-gray-400/5 fi-color-gray w-8 h-8"
                     title="{{ __('filament-copilot::filament-copilot.close') ?? 'Close' }}">
                     <x-filament::icon icon="heroicon-o-x-mark" class="w-5 h-5 text-gray-400 dark:text-gray-400" />
@@ -374,7 +404,7 @@
                 x-transition:enter-start="opacity-0 -translate-x-4" x-transition:enter-end="opacity-100 translate-x-0"
                 x-transition:leave="transition ease-in duration-100"
                 x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 -translate-x-4"
-                x-cloak class="absolute inset-0 z-10 bg-white dark:bg-gray-900 flex flex-col">
+                x-cloak class="copilot-history absolute inset-0 z-10 bg-white dark:bg-gray-900 flex flex-col">
 
                 {{-- Sidebar loading skeleton --}}
                 <div x-show="sidebarLoading" class="flex flex-col h-full">

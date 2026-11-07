@@ -118,6 +118,7 @@ return [
     'approval_required' => 'Bestätigung erforderlich',
     'details' => 'Details',
     'changes_to' => 'wird zu',
+    'open_full_page' => 'Als Vollbild öffnen',
     'copy' => 'Kopieren',
     'copied' => 'Kopiert',
     'copy_answer' => 'Antwort kopieren',

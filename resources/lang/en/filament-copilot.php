@@ -118,6 +118,7 @@ return [
     'approval_required' => 'Approval required',
     'details' => 'Details',
     'changes_to' => 'changes to',
+    'open_full_page' => 'Open full page',
     'copy' => 'Copy',
     'copied' => 'Copied',
     'copy_answer' => 'Copy answer',
