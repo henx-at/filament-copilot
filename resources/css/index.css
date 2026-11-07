@@ -441,3 +441,14 @@
         border-inline-end-color: color-mix(in oklab, white 10%, transparent);
     }
 }
+
+/* Host notice above the input (e.g. budget warning). */
+.copilot-notice {
+    background-color: var(--warning-50);
+    color: var(--warning-800);
+}
+
+.dark .copilot-notice {
+    background-color: color-mix(in oklab, var(--warning-500) 10%, transparent);
+    color: var(--warning-200);
+}

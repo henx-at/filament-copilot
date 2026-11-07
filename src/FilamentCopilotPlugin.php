@@ -57,6 +57,10 @@ class FilamentCopilotPlugin implements Plugin
 
     protected bool $fullPage = false;
 
+    protected ?Closure $messageBlockUsing = null;
+
+    protected ?Closure $chatNoticeUsing = null;
+
     protected ?Closure $toolResultPreviewUsing = null;
 
     public static function make(): static
@@ -74,6 +78,40 @@ class FilamentCopilotPlugin implements Plugin
     public function getSidebarWidth(): ?string
     {
         return $this->sidebarWidth ?? '20rem';
+    }
+
+    /**
+     * Host-defined gate for new messages (e.g. a spending budget). The
+     * closure receives (Authenticatable $user, ?Model $tenant) and returns
+     * the message to show instead of answering, or null to proceed.
+     * Approval decisions of a running turn are never blocked.
+     */
+    public function messageBlockUsing(?Closure $callback): static
+    {
+        $this->messageBlockUsing = $callback;
+
+        return $this;
+    }
+
+    public function getMessageBlock(Authenticatable $user, ?\Illuminate\Database\Eloquent\Model $tenant): ?string
+    {
+        return $this->messageBlockUsing ? ($this->messageBlockUsing)($user, $tenant) : null;
+    }
+
+    /**
+     * Host-defined notice shown above the chat input (e.g. "80 % of the
+     * budget used"). Re-evaluated after every answer; null hides it.
+     */
+    public function chatNoticeUsing(?Closure $callback): static
+    {
+        $this->chatNoticeUsing = $callback;
+
+        return $this;
+    }
+
+    public function getChatNotice(): ?string
+    {
+        return $this->chatNoticeUsing ? ($this->chatNoticeUsing)() : null;
     }
 
     /**

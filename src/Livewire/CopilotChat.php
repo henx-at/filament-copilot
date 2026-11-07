@@ -42,6 +42,8 @@ class CopilotChat extends Component
 
     public ?string $fullPageUrl = null;
 
+    public ?string $notice = null;
+
     public function mount(string $mode = 'drawer', ?string $conversation = null): void
     {
         $this->mode = $mode === 'page' ? 'page' : 'drawer';
@@ -61,6 +63,7 @@ class CopilotChat extends Component
             $this->quickActions = $plugin->getQuickActions();
             $this->sidebarWidth = $plugin->getSidebarWidth();
             $this->fullPageUrl = $this->mode === 'drawer' ? $plugin->getFullPageUrl() : null;
+            $this->notice = $plugin->getChatNotice();
 
         } catch (\Throwable) {
             $this->quickActions = config('filament-copilot.quick_actions', []);
@@ -163,6 +166,7 @@ class CopilotChat extends Component
         $this->messages[] = $assistantMessage;
 
         $this->loadConversations();
+        $this->refreshNotice();
 
         // Lets the host page reload data a tool may have changed (e.g. an open edit form).
         $executedTools = collect($toolCalls ?? [])
@@ -175,6 +179,15 @@ class CopilotChat extends Component
 
         if ($executedTools !== []) {
             $this->dispatch('copilot-tools-executed', tools: $executedTools);
+        }
+    }
+
+    protected function refreshNotice(): void
+    {
+        try {
+            $this->notice = FilamentCopilotPlugin::get()->getChatNotice();
+        } catch (\Throwable $e) {
+            report($e);
         }
     }
 
@@ -282,6 +295,8 @@ class CopilotChat extends Component
             'role' => 'system',
             'content' => __('filament-copilot::filament-copilot.error_occurred').': '.$error,
         ];
+
+        $this->refreshNotice();
     }
 
     protected function getConversationMessages($conversation): array

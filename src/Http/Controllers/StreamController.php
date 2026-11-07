@@ -73,6 +73,15 @@ class StreamController
             });
         }
 
+        $blockMessage = $decisions ? null : $plugin->getMessageBlock($user, $tenant);
+
+        if ($blockMessage !== null) {
+            return $this->sseResponse(function () use ($blockMessage) {
+                $this->sendSseEvent('error', ['message' => $blockMessage]);
+                $this->sendSseEvent('done', []);
+            });
+        }
+
         /** @var ConversationManager $conversationManager */
         $conversationManager = app(ConversationManager::class);
 

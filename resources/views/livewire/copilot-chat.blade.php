@@ -671,6 +671,12 @@
         {{-- Input (sticky footer, matches Filament slide-over) --}}
         <div
             class="sticky bottom-0 border-t border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shrink-0 px-6 py-4">
+            @if (filled($notice))
+                <div class="copilot-notice mb-3 flex items-start gap-2 rounded-lg px-3 py-2 text-xs" role="status">
+                    <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-4 h-4 shrink-0" />
+                    <span>{{ $notice }}</span>
+                </div>
+            @endif
             <form wire:submit="sendMessage"
                 class="flex items-end gap-2 rounded-xl ring-1 ring-gray-300 dark:ring-gray-600 bg-white dark:bg-gray-800 p-2 focus-within:ring-2 focus-within:ring-primary-500 transition-shadow">
                 <textarea wire:model="message" @keydown="handleKeydown($event)" @input="autoResize($event.target)" rows="1"
