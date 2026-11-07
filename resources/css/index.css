@@ -358,3 +358,65 @@
 .dark .copilot-answer :not(pre) > code {
     color: var(--gray-100);
 }
+
+/* Structured change preview (approval card and executed tool calls). */
+.copilot-change-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.copilot-change-preview-title {
+    font-weight: 600;
+}
+
+.copilot-change-preview--delete .copilot-change-preview-title {
+    color: var(--danger-700);
+}
+
+.dark .copilot-change-preview--delete .copilot-change-preview-title {
+    color: var(--danger-400);
+}
+
+.copilot-change-preview-records {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.copilot-change-preview-fields {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    column-gap: 0.75rem;
+    row-gap: 0.125rem;
+    margin: 0;
+}
+
+.copilot-change-preview-fields dt {
+    opacity: 0.7;
+}
+
+.copilot-change-preview-fields dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.copilot-change-preview-old {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.copilot-change-preview-new {
+    font-weight: 500;
+}
+
+.copilot-change-preview-note {
+    margin: 0;
+    opacity: 0.8;
+}
+
+.copilot-tool-preview {
+    margin-top: 0.375rem;
+}

@@ -52,6 +52,10 @@ class FilamentCopilotPlugin implements Plugin
 
     protected string | Closure $sidebarWidth = '20rem';
 
+    protected ?Closure $approvalPreviewUsing = null;
+
+    protected ?Closure $toolResultPreviewUsing = null;
+
     public static function make(): static
     {
         return app(static::class);
@@ -67,6 +71,52 @@ class FilamentCopilotPlugin implements Plugin
     public function getSidebarWidth(): ?string
     {
         return $this->sidebarWidth ?? '20rem';
+    }
+
+    /**
+     * Structured preview for the approval card of a write tool, rendered by
+     * the `change-preview` component instead of the plain approval reason.
+     *
+     * The closure receives (string $tool, array $arguments) and returns the
+     * preview array (see getApprovalPreview()) or null for the plain card.
+     */
+    public function approvalPreviewUsing(?Closure $callback): static
+    {
+        $this->approvalPreviewUsing = $callback;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, mixed>  $arguments
+     * @return array{title?: string, tone?: string, records?: list<array{label: string, url?: ?string, icon?: mixed, color?: mixed}>, fields?: list<array{label: string, old?: ?string, new?: ?string}>, notes?: list<string>}|null
+     */
+    public function getApprovalPreview(string $tool, array $arguments): ?array
+    {
+        return $this->approvalPreviewUsing ? ($this->approvalPreviewUsing)($tool, $arguments) : null;
+    }
+
+    /**
+     * Preview shown under an executed tool call (e.g. a link to the record
+     * it created). The closure receives (string $tool, ?array $arguments,
+     * ?string $result) and returns the same shape as getApprovalPreview().
+     * It is re-evaluated on the server, so it must only resolve data the
+     * current user may see.
+     */
+    public function toolResultPreviewUsing(?Closure $callback): static
+    {
+        $this->toolResultPreviewUsing = $callback;
+
+        return $this;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $arguments
+     * @return array<string, mixed>|null
+     */
+    public function getToolResultPreview(string $tool, ?array $arguments, ?string $result): ?array
+    {
+        return $this->toolResultPreviewUsing ? ($this->toolResultPreviewUsing)($tool, $arguments, $result) : null;
     }
 
     public static function get(): static

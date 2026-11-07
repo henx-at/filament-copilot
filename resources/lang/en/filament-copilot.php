@@ -117,6 +117,7 @@ return [
     // Approvals & copying
     'approval_required' => 'Approval required',
     'details' => 'Details',
+    'changes_to' => 'changes to',
     'copy' => 'Copy',
     'copied' => 'Copied',
     'copy_answer' => 'Copy answer',

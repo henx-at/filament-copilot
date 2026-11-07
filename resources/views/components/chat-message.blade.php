@@ -71,6 +71,11 @@
                     </div>
                 @endif
             </div>
+            @if (! empty($msg['preview']) && is_array($msg['preview']))
+                <div class="copilot-tool-preview">
+                    @include('filament-copilot::components.change-preview', ['preview' => $msg['preview']])
+                </div>
+            @endif
         </div>
     </div>
 @elseif($isAssistant && blank($msg['content'] ?? null))

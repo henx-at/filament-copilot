@@ -117,6 +117,7 @@ return [
     // Approvals & copying
     'approval_required' => 'Bestätigung erforderlich',
     'details' => 'Details',
+    'changes_to' => 'wird zu',
     'copy' => 'Kopieren',
     'copied' => 'Kopiert',
     'copy_answer' => 'Antwort kopieren',

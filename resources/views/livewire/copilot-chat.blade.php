@@ -553,7 +553,9 @@
                         <div class="copilot-approval-body mt-2 text-xs">
                             {{-- The approval reason (if the tool provides one) leads; the raw tool
                                  name and arguments are available on demand. --}}
-                            <div x-show="approval.reason" x-text="approval.reason"
+                            {{-- preview_html is rendered server-side (change-preview component, all values escaped). --}}
+                            <div x-show="approval.preview_html" x-html="approval.preview_html"></div>
+                            <div x-show="approval.reason && !approval.preview_html" x-text="approval.reason"
                                 style="white-space: pre-line; font-size: 0.8125rem; line-height: 1.4;"></div>
                             <details class="mt-1">
                                 <summary style="cursor: pointer; opacity: 0.7;">{{ __('filament-copilot::filament-copilot.details') }}</summary>

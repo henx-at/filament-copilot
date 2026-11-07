@@ -112,14 +112,19 @@ class CopilotChat extends Component
         // Add tool calls as collapsible messages
         if ($toolCalls) {
             foreach ($toolCalls as $toolCall) {
+                $success = ($toolCall['status'] ?? null) === 'done';
+
                 $this->messages[] = [
                     'role' => 'tool_call',
                     'tool_name' => $toolCall['name'] ?? 'Tool',
                     'arguments' => $toolCall['arguments'] ?? null,
                     'result' => $toolCall['result'] ?? null,
-                    'success' => $toolCall['status'] === 'done',
+                    'success' => $success,
                     'error' => $toolCall['error'] ?? null,
                     'content' => $toolCall['result'] ?? '',
+                    // Built on the server from what the client reports; the
+                    // host callback must only resolve records the user may see.
+                    'preview' => $success ? $this->toolResultPreview($toolCall) : null,
                 ];
             }
         }
@@ -152,6 +157,31 @@ class CopilotChat extends Component
 
         if ($executedTools !== []) {
             $this->dispatch('copilot-tools-executed', tools: $executedTools);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $toolCall
+     * @return array<string, mixed>|null
+     */
+    protected function toolResultPreview(array $toolCall): ?array
+    {
+        $name = $toolCall['name'] ?? null;
+
+        if (! is_string($name) || $name === '') {
+            return null;
+        }
+
+        try {
+            return FilamentCopilotPlugin::get()->getToolResultPreview(
+                $name,
+                is_array($toolCall['arguments'] ?? null) ? $toolCall['arguments'] : null,
+                is_string($toolCall['result'] ?? null) ? $toolCall['result'] : null,
+            );
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
         }
     }
 
