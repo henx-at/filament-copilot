@@ -8,7 +8,6 @@ use EslamRedaDiv\FilamentCopilot\Agent\Middleware\AuditMiddleware;
 use EslamRedaDiv\FilamentCopilot\Agent\Middleware\RateLimitMiddleware;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Ai\Attributes\MaxTokens;
-use Laravel\Ai\Attributes\Temperature;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasMiddleware;
@@ -17,7 +16,7 @@ use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Promptable;
 use Stringable;
 
-#[Temperature(0.3)]
+// No #[Temperature]: Claude 5.x models reject any non-default temperature (HTTP 400), the provider default applies.
 #[MaxTokens(4096)]
 class CopilotAgent implements Agent, Conversational, HasMiddleware, HasTools
 {
