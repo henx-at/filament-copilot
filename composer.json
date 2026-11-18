@@ -18,6 +18,7 @@
     "spatie/laravel-package-tools": "^1.16"
   },
   "require-dev": {
+    "laravel/mcp": "^0.9",
     "laravel/pint": "^1.28",
     "nunomaduro/collision": "^8.0",
     "orchestra/testbench": "^10.0",
@@ -48,5 +49,8 @@
     }
   },
   "minimum-stability": "dev",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "suggest": {
+    "laravel/mcp": "Needed for FilamentCopilotPlugin::mcpTools()"
+  }
 }

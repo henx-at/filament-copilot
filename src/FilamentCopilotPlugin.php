@@ -10,6 +10,8 @@ use EslamRedaDiv\FilamentCopilot\Pages\CopilotDashboardPage;
 use EslamRedaDiv\FilamentCopilot\Resources\CopilotAuditLogs\CopilotAuditLogResource;
 use EslamRedaDiv\FilamentCopilot\Resources\CopilotConversations\CopilotConversationResource;
 use EslamRedaDiv\FilamentCopilot\Resources\CopilotRateLimits\CopilotRateLimitResource;
+use EslamRedaDiv\FilamentCopilot\Services\PageContext;
+use EslamRedaDiv\FilamentCopilot\Tools\McpTool;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Filament\Facades\Filament;
@@ -33,7 +35,14 @@ class FilamentCopilotPlugin implements Plugin
     /** @var array<\Laravel\Ai\Contracts\Tool> */
     protected array $globalTools = [];
 
-    protected array $quickActions = [];
+    protected array | Closure $quickActions = [];
+
+    protected bool $pageContext = false;
+
+    protected ?Closure $pageContextRecordUsing = null;
+
+    /** @var list<array{tools: class-string|list<class-string>, except: list<class-string>, tool: class-string<McpTool>}> */
+    protected array $mcpTools = [];
 
     protected ?Closure $authorizeUsing = null;
 
@@ -271,13 +280,91 @@ class FilamentCopilotPlugin implements Plugin
         $prompt = $this->systemPrompt ?? config('filament-copilot.system_prompt');
 
         if ($prompt instanceof Closure) {
-            return (string) app()->call($prompt, [
+            $prompt = (string) app()->call($prompt, [
                 'plugin' => $this,
                 'request' => request(),
             ]);
         }
 
-        return $prompt;
+        $context = $this->pageContext ? $this->getPageContextPrompt() : null;
+
+        if ($context === null) {
+            return $prompt;
+        }
+
+        return filled($prompt) ? "{$prompt}\n\n{$context}" : $context;
+    }
+
+    /**
+     * Appends the open page and record (from the chat's current_url) to the
+     * system prompt of every request.
+     *
+     * @param  (Closure(\Illuminate\Database\Eloquent\Model, class-string): ?string)|null  $describeRecord  title of the open record, or null to keep it out of the prompt; default: the resource's record title
+     */
+    public function pageContext(bool $enabled = true, ?Closure $describeRecord = null): static
+    {
+        $this->pageContext = $enabled;
+        $this->pageContextRecordUsing = $describeRecord;
+
+        return $this;
+    }
+
+    public function getPageContextPrompt(): ?string
+    {
+        $url = request()->input('current_url') ?? request()->headers->get('referer');
+        $panelId = Filament::getCurrentPanel()?->getId();
+
+        if (! is_string($url) || $panelId === null) {
+            return null;
+        }
+
+        return PageContext::prompt($url, $panelId, $this->pageContextRecordUsing);
+    }
+
+    /**
+     * Offers laravel/mcp tools to the chat, so the Copilot uses the same
+     * validated operations as external MCP clients. Write tools (no
+     * readOnlyHint) need the user's approval in the chat.
+     *
+     * @param  class-string|list<class-string>  $tools  MCP tool classes, or a Laravel\Mcp\Server class (its $tools property)
+     * @param  list<class-string>  $except  MCP tool classes to leave out
+     * @param  class-string<McpTool>  $tool  subclass to customise approval texts or tenant rules
+     */
+    public function mcpTools(string | array $tools, array $except = [], string $tool = McpTool::class): static
+    {
+        $this->mcpTools[] = ['tools' => $tools, 'except' => $except, 'tool' => $tool];
+
+        return $this;
+    }
+
+    /**
+     * @return list<McpTool>
+     */
+    public function getMcpTools(): array
+    {
+        $tools = [];
+
+        foreach ($this->mcpTools as $entry) {
+            foreach ($entry['tool']::make($entry['tools'], $entry['except']) as $tool) {
+                $tools[] = $tool;
+            }
+        }
+
+        return $tools;
+    }
+
+    /**
+     * The bridged MCP tool behind a chat tool name, e.g. for approval previews.
+     */
+    public function findMcpTool(string $name): ?McpTool
+    {
+        foreach ($this->getMcpTools() as $tool) {
+            if ($tool->name() === $name) {
+                return $tool;
+            }
+        }
+
+        return null;
     }
 
     public function globalTools(array $tools): static
@@ -289,10 +376,15 @@ class FilamentCopilotPlugin implements Plugin
 
     public function getGlobalTools(): array
     {
-        return ! empty($this->globalTools) ? $this->globalTools : config('filament-copilot.global_tools', []);
+        $tools = ! empty($this->globalTools) ? $this->globalTools : config('filament-copilot.global_tools', []);
+
+        return [...$tools, ...$this->getMcpTools()];
     }
 
-    public function quickActions(array $actions): static
+    /**
+     * @param  array<string, string>|Closure(): array<string, string>  $actions  label => prompt; a closure is evaluated when the chat mounts (tenant known by then)
+     */
+    public function quickActions(array | Closure $actions): static
     {
         $this->quickActions = $actions;
 
@@ -301,7 +393,9 @@ class FilamentCopilotPlugin implements Plugin
 
     public function getQuickActions(): array
     {
-        return ! empty($this->quickActions) ? $this->quickActions : config('filament-copilot.quick_actions', []);
+        $actions = $this->quickActions instanceof Closure ? app()->call($this->quickActions) : $this->quickActions;
+
+        return ! empty($actions) ? $actions : config('filament-copilot.quick_actions', []);
     }
 
     public function authorizeUsing(?Closure $callback): static

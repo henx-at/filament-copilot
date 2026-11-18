@@ -6,6 +6,7 @@ namespace EslamRedaDiv\FilamentCopilot;
 
 use EslamRedaDiv\FilamentCopilot\Commands\InstallCommand;
 use EslamRedaDiv\FilamentCopilot\Commands\MakeCopilotToolCommand;
+use EslamRedaDiv\FilamentCopilot\Listeners\LogCopilotSteps;
 use EslamRedaDiv\FilamentCopilot\Livewire\ConversationSidebar;
 use EslamRedaDiv\FilamentCopilot\Livewire\CopilotButton;
 use EslamRedaDiv\FilamentCopilot\Livewire\CopilotChat;
@@ -16,6 +17,7 @@ use EslamRedaDiv\FilamentCopilot\Services\ToolRegistry;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
+use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -46,6 +48,10 @@ class FilamentCopilotServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
+        if (filled(config('filament-copilot.log_channel'))) {
+            Event::subscribe(LogCopilotSteps::class);
+        }
+
         $aiMigrationsPath = base_path('vendor/laravel/ai/database/migrations');
 
         if (is_dir($aiMigrationsPath)) {

@@ -349,6 +349,18 @@ Register tool classes that should be available on **every** page across the pane
 
 ---
 
+### Page Context (HENX fork)
+
+`->pageContext()` appends the open page and record (from the chat's `current_url`) to the system prompt of every request, so "this record" works. Records are resolved through the resource with the tenant scope and `canView()`; pass a closure `fn (Model $record, string $resource): ?string` as second argument for your own title (return `null` to keep a record out of the prompt).
+
+### MCP Tools (HENX fork, needs `laravel/mcp`)
+
+`->mcpTools(MyServer::class)` (or a list of tool classes) offers your laravel/mcp tools in the chat. Tools without `#[IsReadOnly]` need the user's approval. Subclass `McpTool` and set `$tenantArgument` to hide a tenant-id argument and force it to the current tenant; override `approvalReason()` for readable approval cards.
+
+### Step Log (HENX fork)
+
+Set `FILAMENT_COPILOT_LOG_CHANNEL` to log one line per model step and tool call (duration, tokens, finish reason, sizes; never contents). `->quickActions()` also takes a closure, evaluated when the chat mounts.
+
 ## Panel Registration
 
 ### Basic Registration
