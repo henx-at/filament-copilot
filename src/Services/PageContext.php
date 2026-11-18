@@ -65,10 +65,12 @@ class PageContext
         $resourceClass = method_exists($pageClass, 'getResource') ? $pageClass::getResource() : null;
         $isResource = is_string($resourceClass) && is_subclass_of($resourceClass, Resource::class);
 
-        $isCreate = is_subclass_of($pageClass, CreateRecord::class);
-        $isList = is_subclass_of($pageClass, ListRecords::class);
-        $isEdit = is_subclass_of($pageClass, EditRecord::class);
-        $isView = is_subclass_of($pageClass, ViewRecord::class);
+        // Name prefix as fallback for custom resource pages that extend Page directly.
+        $base = class_basename($pageClass);
+        $isCreate = is_subclass_of($pageClass, CreateRecord::class) || str_starts_with($base, 'Create');
+        $isList = is_subclass_of($pageClass, ListRecords::class) || str_starts_with($base, 'List');
+        $isEdit = is_subclass_of($pageClass, EditRecord::class) || str_starts_with($base, 'Edit');
+        $isView = is_subclass_of($pageClass, ViewRecord::class) || str_starts_with($base, 'View');
 
         $recordId = null;
         $recordTitle = null;
