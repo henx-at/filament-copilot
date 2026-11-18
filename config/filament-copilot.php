@@ -178,4 +178,16 @@ return [
 
     'global_tools' => [],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Step log
+    |--------------------------------------------------------------------------
+    |
+    | Log channel for one line per model step and tool call (duration, finish
+    | reason, tokens, sizes; never contents). Null turns it off.
+    |
+    */
+
+    'log_channel' => env('FILAMENT_COPILOT_LOG_CHANNEL'),
+
 ];
